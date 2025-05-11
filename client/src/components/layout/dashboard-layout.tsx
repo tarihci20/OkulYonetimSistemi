@@ -76,6 +76,12 @@ export default function DashboardLayout({ children, title }: DashboardLayoutProp
           isActive: location === "/schedule",
         },
         {
+          title: "Zil ve Teneffüs Saatleri",
+          href: "/periods",
+          icon: <Bell className="w-4 h-4" />,
+          isActive: location === "/periods",
+        },
+        {
           title: "Nöbet Yönetimi",
           href: "/duty",
           icon: <ClipboardList className="w-4 h-4" />,
@@ -137,23 +143,24 @@ export default function DashboardLayout({ children, title }: DashboardLayoutProp
             </div>
             
             {section.items.map((item, itemIndex) => (
-              <Button
-                key={itemIndex}
-                variant="ghost"
-                className={cn(
-                  "flex w-full justify-start items-center px-3 py-2 rounded-md text-sm font-medium mb-1 transition-colors",
-                  item.isActive
-                    ? "bg-primary bg-opacity-10 text-primary"
-                    : "hover:bg-neutral-100 text-neutral-500"
-                )}
-                onClick={() => {
-                  setIsMobileSidebarOpen(false);
-                  window.location.href = item.href;
-                }}
-              >
-                <span className="mr-3">{item.icon}</span>
-                <span>{item.title}</span>
-              </Button>
+              <Link href={item.href}>
+                <Button
+                  key={itemIndex}
+                  variant="ghost"
+                  className={cn(
+                    "flex w-full justify-start items-center px-3 py-2 rounded-md text-sm font-medium mb-1 transition-colors",
+                    item.isActive
+                      ? "bg-primary bg-opacity-10 text-primary"
+                      : "hover:bg-neutral-100 text-neutral-500"
+                  )}
+                  onClick={() => {
+                    setIsMobileSidebarOpen(false);
+                  }}
+                >
+                  <span className="mr-3">{item.icon}</span>
+                  <span>{item.title}</span>
+                </Button>
+              </Link>
             ))}
           </div>
         ))}

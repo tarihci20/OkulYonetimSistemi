@@ -13,6 +13,7 @@ import TeacherSchedulePage from "@/pages/teacher-schedule-page";
 import DutyManagementPage from "@/pages/duty-management-page";
 import AbsentTeacherPage from "@/pages/absent-teacher-page";
 import ExtraLessonPage from "@/pages/extra-lesson-page";
+import PeriodsPage from "@/pages/periods-page";
 import AdminPage from "@/pages/admin-page";
 
 function Router() {
@@ -20,6 +21,7 @@ function Router() {
     <Switch>
       <ProtectedRoute path="/" component={DashboardPage} />
       <ProtectedRoute path="/schedule" component={TeacherSchedulePage} />
+      <ProtectedRoute path="/periods" component={PeriodsPage} />
       <ProtectedRoute path="/duty" component={DutyManagementPage} />
       <ProtectedRoute path="/absent" component={AbsentTeacherPage} />
       <ProtectedRoute path="/extra-lesson" component={ExtraLessonPage} />

@@ -21,6 +21,42 @@ interface Teacher {
   branch: string;
 }
 
+interface Period {
+  id: number;
+  order: number;
+  startTime: string;
+  endTime: string;
+}
+
+interface Schedule {
+  id: number;
+  dayOfWeek: number;
+  periodId: number;
+  teacherId: number;
+  classId: number;
+  subjectId: number;
+  class: {
+    id: number;
+    name: string;
+  };
+  subject: {
+    id: number;
+    name: string;
+  };
+  teacher: {
+    id: number;
+    name: string;
+    surname: string;
+    fullName: string;
+  };
+  period: {
+    id: number;
+    order: number;
+    startTime: string;
+    endTime: string;
+  };
+}
+
 interface TeacherSchedule {
   id: number;
   periodId: number;
@@ -40,35 +76,35 @@ const TeacherSchedule: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
 
   // Öğretmenleri çek
-  const { data: teachersData, isLoading: isLoadingTeachers } = useQuery({
-    queryKey: ["/api/teachers"]
+  const { data: teachersData, isLoading: isLoadingTeachers } = useQuery<Teacher[]>({
+    queryKey: ["/api/teachers"],
   });
 
   // Ders saatleri çek
-  const { data: periodsData } = useQuery({
+  const { data: periodsData } = useQuery<Period[]>({
     queryKey: ["/api/periods"]
   });
 
   // Mevcut ders saati hesaplama
   const currentPeriod = useMemo(() => {
-    if (!periodsData) return null;
+    if (!periodsData || !Array.isArray(periodsData)) return null;
     
     const currentTime = formattedTime;
-    return periodsData.find((period: any) => 
+    return periodsData.find((period) => 
       currentTime >= period.startTime && currentTime <= period.endTime
     );
   }, [periodsData, formattedTime]);
 
   // Program verilerini çek
-  const { data: schedulesData, isLoading: isLoadingSchedules } = useQuery({
+  const { data: schedulesData, isLoading: isLoadingSchedules } = useQuery<Schedule[]>({
     queryKey: ["/api/enhanced/schedules"]
   });
 
   // Öğretmen filtresi
   const filteredTeachers = useMemo(() => {
-    if (!teachersData) return [];
+    if (!teachersData || !Array.isArray(teachersData)) return [];
     
-    return teachersData.filter((teacher: Teacher) => 
+    return teachersData.filter((teacher) => 
       teacher.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       teacher.branch.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -76,17 +112,17 @@ const TeacherSchedule: React.FC = () => {
 
   // Seçilen öğretmenin programı
   const teacherSchedules = useMemo(() => {
-    if (!schedulesData || !periodsData || !selectedTeacherId) return [];
+    if (!schedulesData || !Array.isArray(schedulesData) || !selectedTeacherId) return [];
 
     // Bugünün programını filtrele
-    const todaySchedules = schedulesData.filter((schedule: any) => 
+    const todaySchedules = schedulesData.filter((schedule) => 
       schedule.teacherId === selectedTeacherId && 
       schedule.dayOfWeek === dayOfWeek
     );
     
     // Ders saatleri sırasına göre düzenle
     return todaySchedules
-      .map((schedule: any) => ({
+      .map((schedule) => ({
         id: schedule.id,
         periodId: schedule.periodId,
         periodOrder: schedule.period.order,
@@ -94,8 +130,8 @@ const TeacherSchedule: React.FC = () => {
         className: schedule.class.name,
         subject: schedule.subject.name,
       }))
-      .sort((a: TeacherSchedule, b: TeacherSchedule) => a.periodOrder - b.periodOrder);
-  }, [schedulesData, periodsData, selectedTeacherId, dayOfWeek]);
+      .sort((a, b) => a.periodOrder - b.periodOrder);
+  }, [schedulesData, selectedTeacherId, dayOfWeek]);
 
   // Loading durumu
   if (isLoadingTeachers || isLoadingSchedules) {
@@ -127,7 +163,7 @@ const TeacherSchedule: React.FC = () => {
           />
         </div>
         
-        {teachersData && teachersData.length > 0 && (
+        {teachersData && Array.isArray(teachersData) && teachersData.length > 0 && (
           <Select 
             value={selectedTeacherId?.toString() || ""} 
             onValueChange={(value) => setSelectedTeacherId(Number(value))}
@@ -136,7 +172,7 @@ const TeacherSchedule: React.FC = () => {
               <SelectValue placeholder="Öğretmen seçiniz" />
             </SelectTrigger>
             <SelectContent>
-              {filteredTeachers.map((teacher: Teacher) => (
+              {filteredTeachers.map((teacher) => (
                 <SelectItem key={teacher.id} value={teacher.id.toString()}>
                   {teacher.fullName} - {teacher.branch}
                 </SelectItem>
@@ -151,7 +187,7 @@ const TeacherSchedule: React.FC = () => {
         {selectedTeacherId ? (
           teacherSchedules.length > 0 ? (
             <div className="space-y-2">
-              {teacherSchedules.map((schedule: TeacherSchedule) => (
+              {teacherSchedules.map((schedule) => (
                 <div 
                   key={schedule.id} 
                   className={`p-3 rounded-lg border ${
@@ -194,7 +230,7 @@ const TeacherSchedule: React.FC = () => {
       </div>
       
       <div className="mt-3">
-        <Link href="/schedule">
+        <Link href="/teacher-schedule">
           <Button variant="link" className="text-primary text-sm flex items-center p-0 h-auto">
             <span>Tüm öğretmen programlarını görüntüle</span>
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">

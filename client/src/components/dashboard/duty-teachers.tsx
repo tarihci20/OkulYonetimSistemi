@@ -27,12 +27,12 @@ interface DutyTeacher {
 }
 
 const DutyTeachers: React.FC = () => {
-  const { formattedDate, getDayOfWeek } = useTurkishDate();
+  const { formattedDate, turkishDayOfWeek, dayOfWeek } = useTurkishDate();
   
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error } = useQuery<DutyTeacher[]>({
     queryKey: ["/api/enhanced/duties"],
     select: (data) => {
-      const dayOfWeek = getDayOfWeek() === 0 ? 7 : getDayOfWeek();
+      if (!Array.isArray(data)) return [];
       return data
         .filter((duty: DutyTeacher) => duty.dayOfWeek === dayOfWeek)
         .slice(0, 5);
@@ -72,18 +72,18 @@ const DutyTeachers: React.FC = () => {
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-medium">Bugünkü Nöbetçiler</h3>
         <div className="text-xs bg-warning text-white px-2 py-1 rounded-full">
-          {formattedDate}
+          {turkishDayOfWeek}
         </div>
       </div>
       
-      <div className="overflow-y-auto max-h-64">
+      <div className="overflow-y-auto max-h-[320px]">
         {data && data.length > 0 ? (
           data.map((dutyTeacher: DutyTeacher) => (
-            <div key={dutyTeacher.id} className="flex items-center p-2 border-b">
+            <div key={dutyTeacher.id} className="flex items-center p-3 border-b last:border-b-0">
               <div className="w-10 h-10 rounded-full bg-warning bg-opacity-10 text-warning flex items-center justify-center">
                 <UserCheck className="h-5 w-5" />
               </div>
-              <div className="ml-3">
+              <div className="ml-3 flex-1">
                 <div className="font-medium">{dutyTeacher.teacher.fullName}</div>
                 <div className="text-sm text-neutral-500">{dutyTeacher.location.name}</div>
               </div>

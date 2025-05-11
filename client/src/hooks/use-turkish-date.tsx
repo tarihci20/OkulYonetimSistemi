@@ -22,7 +22,7 @@ const defaultOptions: TurkishDateOptions = {
   updateInterval: 60000, // Update every minute by default
   includeTime: true,
   includeYear: true,
-  includeDay: false,
+  includeDay: true,
   dateOnly: false,
   timeOnly: false,
 };
@@ -52,7 +52,9 @@ export function useTurkishDate(options: TurkishDateOptions = {}) {
   // Format date according to options
   let formattedDate = '';
   let formattedTime = '';
-  let dayOfWeek = '';
+  
+  // Get Turkish day name regardless of options
+  const turkishDayOfWeek = turkishDays[date.getDay()];
   
   // Custom format or automatic format
   if (mergedOptions.formatString) {
@@ -68,29 +70,25 @@ export function useTurkishDate(options: TurkishDateOptions = {}) {
     if (mergedOptions.includeTime && !mergedOptions.dateOnly) {
       formattedTime = format(date, 'HH:mm', { locale: tr });
     }
-    
-    // Day of week part
-    if (mergedOptions.includeDay) {
-      dayOfWeek = turkishDays[date.getDay()];
-    }
   }
   
   return {
     date,
     formattedDate,
     formattedTime,
-    dayOfWeek,
+    turkishDayOfWeek,
+    dayOfWeek: date.getDay() === 0 ? 7 : date.getDay(), // 1-7 formatı (Pazartesi=1, Pazar=7)
     formatDate: (dateStr: string, formatStr: string = 'd MMMM yyyy') => 
       format(parseISO(dateStr), formatStr, { locale: tr }),
     getFormattedDate: () => {
       if (mergedOptions.timeOnly) return formattedTime;
       if (mergedOptions.dateOnly) return formattedDate;
       if (mergedOptions.includeDay) {
-        return `${dayOfWeek}, ${formattedDate} ${formattedTime}`;
+        return `${turkishDayOfWeek}, ${formattedDate} ${formattedTime}`;
       }
       return mergedOptions.includeTime ? `${formattedDate} ${formattedTime}` : formattedDate;
     },
-    getDayOfWeek: () => date.getDay(),
+    getDayOfWeek: () => date.getDay() === 0 ? 7 : date.getDay(), // 1-7 formatı (Pazartesi=1, Pazar=7)
     getTurkishDayName: () => turkishDays[date.getDay()],
   };
 }

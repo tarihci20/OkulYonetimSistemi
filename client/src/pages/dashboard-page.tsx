@@ -3,29 +3,71 @@ import DashboardLayout from '@/components/layout/dashboard-layout';
 import { StatusCard } from '@/components/dashboard/status-card';
 import ActiveClasses from '@/components/dashboard/active-classes';
 import DutyTeachers from '@/components/dashboard/duty-teachers';
-import AbsentTeachers from '@/components/dashboard/absent-teachers';
-import SubstitutionPanel from '@/components/substitution/substitution-panel';
+import TeacherSchedule from '@/components/dashboard/teacher-schedule';
 import { useQuery } from '@tanstack/react-query';
-import { School, ClipboardList, UserX } from 'lucide-react';
+import { School, ClipboardList, UserX, Clock } from 'lucide-react';
 import { useTurkishDate } from '@/hooks/use-turkish-date';
 
-const DashboardPage: React.FC = () => {
-  const { formattedDate, formattedTime } = useTurkishDate({ updateInterval: 30000 });
+interface Period {
+  id: number;
+  order: number;
+  startTime: string;
+  endTime: string;
+}
 
-  // Current period data
-  const { data: currentDayData, isLoading } = useQuery({
+interface DashboardData {
+  date: string;
+  dayOfWeek: number;
+  schedules: Array<{
+    id: number;
+    dayOfWeek: number;
+    periodId: number;
+    teacherId: number;
+    // other fields...
+  }>;
+  duties: Array<{
+    id: number;
+    dayOfWeek: number;
+    teacherId: number;
+    // other fields...
+  }>;
+  absences: Array<{
+    id: number;
+    teacherId: number;
+    date: string;
+    // other fields...
+  }>;
+  periods: Period[];
+  currentPeriod: Period | null;
+}
+
+const DashboardPage: React.FC = () => {
+  const { date, formattedDate, formattedTime, turkishDayOfWeek } = useTurkishDate({ updateInterval: 30000 });
+  const dayOfWeek = date.getDay() === 0 ? 7 : date.getDay(); // 1-7 (Pazartesi-Pazar)
+
+  // Ders dönemi verilerini çek
+  const { data: periodsData } = useQuery<Period[]>({
+    queryKey: ['/api/periods']
+  });
+
+  // Mevcut zaman bilgisi ve ders dönemi hesaplama
+  const currentPeriod = React.useMemo(() => {
+    if (!periodsData || !Array.isArray(periodsData)) return null;
+    const currentTime = formattedTime;
+    
+    return periodsData.find((period) => 
+      currentTime >= period.startTime && currentTime <= period.endTime
+    );
+  }, [periodsData, formattedTime]);
+
+  // Dashboard verilerini çek
+  const { data: currentDayData, isLoading } = useQuery<DashboardData>({
     queryKey: ['/api/dashboard/current-day']
   });
 
-  // Get current period details if any
-  const currentPeriod = React.useMemo(() => {
-    if (!currentDayData || !currentDayData.currentPeriod) return null;
-    return currentDayData.currentPeriod;
-  }, [currentDayData]);
-
-  // Calculate stats for status cards
+  // İstatistik kartları için değerleri hesapla
   const stats = React.useMemo(() => {
-    if (!currentDayData) {
+    if (!currentDayData || typeof currentDayData !== 'object') {
       return {
         activeClasses: 0,
         dutyTeachers: 0,
@@ -34,33 +76,31 @@ const DashboardPage: React.FC = () => {
       };
     }
 
-    // Get current day of week and only count current lessons if in a period
-    const dayOfWeek = currentDayData.dayOfWeek;
+    // Bugünün ders programını filtrele
+    const schedules = Array.isArray(currentDayData.schedules) ? currentDayData.schedules : [];
+    const duties = Array.isArray(currentDayData.duties) ? currentDayData.duties : [];
+    const absences = Array.isArray(currentDayData.absences) ? currentDayData.absences : [];
     
-    // Count active classes
-    const activeClassesCount = currentPeriod
-      ? currentDayData.schedules
-          .filter((s: any) => s.dayOfWeek === dayOfWeek && s.periodId === currentPeriod.id)
-          .length
+    // Aktif sınıfları say
+    const activeClassesCount = currentPeriod && schedules.length > 0
+      ? schedules.filter((s) => s.dayOfWeek === dayOfWeek && s.periodId === currentPeriod.id).length
       : 0;
     
-    // Count duty teachers for today
-    const dutyTeachersCount = currentDayData.duties
-      .filter((d: any) => d.dayOfWeek === dayOfWeek)
-      .length;
+    // Bugünkü nöbetçileri say
+    const dutyTeachersCount = duties.length > 0
+      ? duties.filter((d) => d.dayOfWeek === dayOfWeek).length
+      : 0;
     
-    // Count absent teachers
-    const absentTeachersCount = currentDayData.absences.length;
+    // Yoklama alan öğretmenleri say
+    const absentTeachersCount = absences.length;
     
-    // Count missing lessons due to absences (if in a period)
-    const missingLessonsCount = currentPeriod
-      ? currentDayData.schedules
-          .filter((s: any) => 
-            s.dayOfWeek === dayOfWeek && 
-            s.periodId === currentPeriod.id && 
-            currentDayData.absences.some((a: any) => a.teacherId === s.teacherId)
-          )
-          .length
+    // Yoklama alınan dersler (boşta kalan dersler)
+    const missingLessonsCount = currentPeriod && schedules.length > 0 && absences.length > 0
+      ? schedules.filter((s) => 
+          s.dayOfWeek === dayOfWeek && 
+          s.periodId === currentPeriod.id && 
+          absences.some((a) => a.teacherId === s.teacherId)
+        ).length
       : 0;
     
     return {
@@ -69,22 +109,26 @@ const DashboardPage: React.FC = () => {
       absentTeachers: absentTeachersCount,
       missingLessons: missingLessonsCount
     };
-  }, [currentDayData, currentPeriod]);
+  }, [currentDayData, currentPeriod, dayOfWeek]);
 
   return (
     <DashboardLayout title="Kontrol Paneli">
-      {/* Current Status Section */}
+      {/* Üst Durum Kartları */}
       <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-        <h3 className="text-lg font-medium mb-4 border-b pb-2">
-          Mevcut Durum 
-          {currentPeriod ? (
-            <span className="text-neutral-400 text-sm ml-2">
-              {currentPeriod.order}. Ders ({currentPeriod.startTime} - {currentPeriod.endTime})
-            </span>
-          ) : (
-            <span className="text-neutral-400 text-sm ml-2">Ders saati dışında</span>
-          )}
-        </h3>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-medium">
+            Günlük Durum Özeti
+          </h3>
+          <div className="flex items-center text-neutral-500 text-sm">
+            <Clock className="mr-1.5 h-4 w-4" />
+            <span>{formattedDate} {formattedTime}</span>
+            {currentPeriod && (
+              <span className="ml-2 px-2 py-0.5 bg-primary/10 text-primary rounded-full text-xs">
+                {currentPeriod.order}. Ders
+              </span>
+            )}
+          </div>
+        </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <StatusCard
@@ -113,17 +157,16 @@ const DashboardPage: React.FC = () => {
         </div>
       </div>
       
-      {/* Current Schedule Section */}
+      {/* Ana İçerik Bölümü - Sınıflar, Öğretmenler ve Nöbetçiler */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        {/* 1. Sınıflardaki Dersler */}
         <ActiveClasses />
+        
+        {/* 2. Öğretmen Dersleri */}
+        <TeacherSchedule />
+        
+        {/* 3. Bugünkü Nöbetçiler */}
         <DutyTeachers />
-        <AbsentTeachers />
-      </div>
-      
-      {/* Absent Teacher Management Section */}
-      <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-        <h3 className="text-lg font-medium mb-4 border-b pb-2">Yoklama Yönetimi</h3>
-        <SubstitutionPanel />
       </div>
     </DashboardLayout>
   );

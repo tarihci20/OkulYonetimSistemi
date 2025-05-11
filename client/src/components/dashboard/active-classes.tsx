@@ -5,12 +5,20 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useTurkishDate } from "@/hooks/use-turkish-date";
 
+interface Period {
+  id: number;
+  order: number;
+  startTime: string;
+  endTime: string;
+}
+
 interface ActiveClass {
   id: number;
   className: string;
   subject: string;
   teacher: string;
   periodId: number;
+  empty?: boolean;
 }
 
 interface Schedule {
@@ -48,41 +56,42 @@ const ActiveClasses: React.FC = () => {
   const dayOfWeek = date.getDay() === 0 ? 7 : date.getDay(); // 1-7 (Pazartesi-Pazar)
 
   // Ders saatleri ve mevcut ders saati
-  const { data: periodsData } = useQuery({
+  const { data: periodsData } = useQuery<Period[]>({
     queryKey: ["/api/periods"],
   });
 
   // Mevcut ders saati hesaplama
   const currentPeriod = React.useMemo(() => {
-    if (!periodsData) return null;
+    if (!periodsData || !Array.isArray(periodsData)) return null;
     
     const currentTime = formattedTime;
-    return periodsData.find((period: any) => 
+    return periodsData.find((period) => 
       currentTime >= period.startTime && currentTime <= period.endTime
     );
   }, [periodsData, formattedTime]);
 
   // Tüm sınıf ve dersler için veri çekme
-  const { data: schedulesData, isLoading } = useQuery({
+  const { data: schedulesData, isLoading } = useQuery<Schedule[]>({
     queryKey: ['/api/enhanced/schedules']
   });
 
   // Sınıflar için dersler tablosu oluşturma
   const classSchedules = React.useMemo(() => {
-    if (!schedulesData || !periodsData || !currentPeriod) return [];
+    if (!schedulesData || !Array.isArray(schedulesData) || !periodsData || !currentPeriod) return [];
 
     // Bugünün programını filtrele
-    const todaySchedules = schedulesData.filter((schedule: Schedule) => 
+    const todaySchedules = schedulesData.filter((schedule) => 
       schedule.dayOfWeek === dayOfWeek
     );
     
     // Tüm sınıfları bul
-    const allClasses = Array.from(new Set(todaySchedules.map((s: Schedule) => s.class.name)))
-      .sort((a, b) => a.localeCompare(b, 'tr'));
+    const allClasses = Array.from(
+      new Set(todaySchedules.map((s) => s.class.name))
+    ).sort((a, b) => a.localeCompare(b, 'tr'));
     
     // Her sınıf için mevcut ders saatindeki programı oluştur
     return allClasses.map(className => {
-      const scheduleForClass = todaySchedules.find((s: Schedule) => 
+      const scheduleForClass = todaySchedules.find((s) => 
         s.class.name === className && s.periodId === currentPeriod.id
       );
 
@@ -127,9 +136,9 @@ const ActiveClasses: React.FC = () => {
       
       <div className="overflow-y-auto max-h-[400px]">
         {currentPeriod ? (
-          classSchedules.length > 0 ? (
+          Array.isArray(classSchedules) && classSchedules.length > 0 ? (
             <div className="grid gap-2">
-              {classSchedules.map((classItem: ActiveClass & {empty?: boolean}) => (
+              {classSchedules.map((classItem) => (
                 <div 
                   key={`${classItem.className}-${classItem.periodId}`} 
                   className={`flex items-center p-3 rounded-lg ${classItem.empty ? 'bg-gray-50' : 'bg-primary/5 border border-primary/20'}`}

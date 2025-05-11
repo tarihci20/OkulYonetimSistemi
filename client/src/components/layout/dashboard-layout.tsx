@@ -143,7 +143,7 @@ export default function DashboardLayout({ children, title }: DashboardLayoutProp
             </div>
             
             {section.items.map((item, itemIndex) => (
-              <Link key={itemIndex} href={item.href}>
+              <div key={itemIndex}>
                 <Button
                   variant="ghost"
                   className={cn(
@@ -154,12 +154,13 @@ export default function DashboardLayout({ children, title }: DashboardLayoutProp
                   )}
                   onClick={() => {
                     setIsMobileSidebarOpen(false);
+                    window.location.href = item.href;
                   }}
                 >
                   <span className="mr-3">{item.icon}</span>
                   <span>{item.title}</span>
                 </Button>
-              </Link>
+              </div>
             ))}
           </div>
         ))}

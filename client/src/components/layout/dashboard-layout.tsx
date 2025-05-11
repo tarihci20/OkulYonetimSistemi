@@ -64,6 +64,11 @@ export default function DashboardLayout({ children, title }: DashboardLayoutProp
           icon: <LayoutDashboard className="w-4 h-4" />,
           isActive: location === "/",
         },
+      ],
+    },
+    {
+      title: "YÖNETİM PANELİ",
+      items: [
         {
           title: "Ders Programı",
           href: "/schedule",
@@ -88,11 +93,6 @@ export default function DashboardLayout({ children, title }: DashboardLayoutProp
           icon: <PlusCircle className="w-4 h-4" />,
           isActive: location === "/extra-lesson",
         },
-      ],
-    },
-    {
-      title: "YÖNETİM",
-      items: [
         {
           title: "Öğretmenler",
           href: "/admin/teachers",

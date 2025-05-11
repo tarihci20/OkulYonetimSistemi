@@ -122,7 +122,7 @@ const DutyManagementPage: React.FC = () => {
                   <SelectValue placeholder="Tüm günler" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Tüm günler</SelectItem>
+                  <SelectItem value="all">Tüm günler</SelectItem>
                   <SelectItem value="1">Pazartesi</SelectItem>
                   <SelectItem value="2">Salı</SelectItem>
                   <SelectItem value="3">Çarşamba</SelectItem>
@@ -141,7 +141,7 @@ const DutyManagementPage: React.FC = () => {
                   <SelectValue placeholder="Tüm nöbet yerleri" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Tüm nöbet yerleri</SelectItem>
+                  <SelectItem value="all">Tüm nöbet yerleri</SelectItem>
                   {locations && locations.map(location => (
                     <SelectItem key={location.id} value={location.id.toString()}>
                       {location.name}

@@ -226,7 +226,7 @@ const TeacherSchedulePage: React.FC = () => {
                   <SelectValue placeholder="Tüm günler" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Tüm günler</SelectItem>
+                  <SelectItem value="all">Tüm günler</SelectItem>
                   <SelectItem value="1">Pazartesi</SelectItem>
                   <SelectItem value="2">Salı</SelectItem>
                   <SelectItem value="3">Çarşamba</SelectItem>
@@ -245,7 +245,7 @@ const TeacherSchedulePage: React.FC = () => {
                   <SelectValue placeholder="Tüm öğretmenler" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Tüm öğretmenler</SelectItem>
+                  <SelectItem value="all">Tüm öğretmenler</SelectItem>
                   {teachers && teachers.map(teacher => (
                     <SelectItem key={teacher.id} value={teacher.id.toString()}>
                       {teacher.name} {teacher.surname}
@@ -262,7 +262,7 @@ const TeacherSchedulePage: React.FC = () => {
                   <SelectValue placeholder="Tüm sınıflar" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Tüm sınıflar</SelectItem>
+                  <SelectItem value="all">Tüm sınıflar</SelectItem>
                   {classes && classes.map(cls => (
                     <SelectItem key={cls.id} value={cls.id.toString()}>
                       {cls.name}
@@ -539,7 +539,7 @@ const TeacherSchedulePage: React.FC = () => {
                   <SelectValue placeholder="Öğretmen seçin" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Tüm öğretmenler</SelectItem>
+                  <SelectItem value="all">Tüm öğretmenler</SelectItem>
                   {teachers && teachers.map(teacher => (
                     <SelectItem key={teacher.id} value={teacher.id.toString()}>
                       {teacher.name} {teacher.surname}
@@ -562,7 +562,7 @@ const TeacherSchedulePage: React.FC = () => {
                   <SelectValue placeholder="Sınıf seçin" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Tüm sınıflar</SelectItem>
+                  <SelectItem value="all">Tüm sınıflar</SelectItem>
                   {classes && classes.map(cls => (
                     <SelectItem key={cls.id} value={cls.id.toString()}>
                       {cls.name}

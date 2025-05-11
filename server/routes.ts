@@ -157,6 +157,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  app.patch("/api/periods/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Geçersiz ID formatı" });
+      }
+      
+      const validatedData = insertPeriodSchema.partial().parse(req.body);
+      const updatedPeriod = await storage.updatePeriod(id, validatedData);
+      
+      if (!updatedPeriod) {
+        return res.status(404).json({ message: "Ders saati bulunamadı" });
+      }
+      
+      res.json(updatedPeriod);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Geçersiz veri", errors: error.errors });
+      }
+      res.status(500).json({ message: "Ders saati güncellenirken hata oluştu" });
+    }
+  });
+  
+  app.delete("/api/periods/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Geçersiz ID formatı" });
+      }
+      
+      const result = await storage.deletePeriod(id);
+      if (!result) {
+        return res.status(404).json({ message: "Ders saati bulunamadı" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Ders saati silinirken hata oluştu" });
+    }
+  });
+  
   // Schedule routes
   app.get("/api/schedules", isAuthenticated, async (req, res) => {
     try {

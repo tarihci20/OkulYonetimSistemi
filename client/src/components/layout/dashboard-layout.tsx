@@ -143,9 +143,8 @@ export default function DashboardLayout({ children, title }: DashboardLayoutProp
             </div>
             
             {section.items.map((item, itemIndex) => (
-              <Link href={item.href}>
+              <Link key={itemIndex} href={item.href}>
                 <Button
-                  key={itemIndex}
                   variant="ghost"
                   className={cn(
                     "flex w-full justify-start items-center px-3 py-2 rounded-md text-sm font-medium mb-1 transition-colors",

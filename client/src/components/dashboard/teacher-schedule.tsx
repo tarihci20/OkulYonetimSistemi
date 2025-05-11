@@ -104,10 +104,14 @@ const TeacherSchedule: React.FC = () => {
   const filteredTeachers = useMemo(() => {
     if (!teachersData || !Array.isArray(teachersData)) return [];
     
-    return teachersData.filter((teacher) => 
-      teacher.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      teacher.branch.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    return teachersData.filter((teacher) => {
+      // Öğretmenin tam adını oluştur (fullName özelliği yoksa)
+      const fullName = teacher.fullName || `${teacher.name} ${teacher.surname}`;
+      return (
+        fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        teacher.branch.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    });
   }, [teachersData, searchTerm]);
 
   // Seçilen öğretmenin programı
@@ -174,7 +178,7 @@ const TeacherSchedule: React.FC = () => {
             <SelectContent>
               {filteredTeachers.map((teacher) => (
                 <SelectItem key={teacher.id} value={teacher.id.toString()}>
-                  {teacher.fullName} - {teacher.branch}
+                  {teacher.name} {teacher.surname} - {teacher.branch}
                 </SelectItem>
               ))}
             </SelectContent>

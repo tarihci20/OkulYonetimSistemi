@@ -137,20 +137,23 @@ export default function DashboardLayout({ children, title }: DashboardLayoutProp
             </div>
             
             {section.items.map((item, itemIndex) => (
-              <Link key={itemIndex} href={item.href}>
-                <a
-                  className={cn(
-                    "flex items-center px-3 py-2 rounded-md text-sm font-medium mb-1 transition-colors",
-                    item.isActive
-                      ? "bg-primary bg-opacity-10 text-primary"
-                      : "hover:bg-neutral-100 text-neutral-500"
-                  )}
-                  onClick={() => setIsMobileSidebarOpen(false)}
-                >
-                  <span className="mr-3">{item.icon}</span>
-                  <span>{item.title}</span>
-                </a>
-              </Link>
+              <Button
+                key={itemIndex}
+                variant="ghost"
+                className={cn(
+                  "flex w-full justify-start items-center px-3 py-2 rounded-md text-sm font-medium mb-1 transition-colors",
+                  item.isActive
+                    ? "bg-primary bg-opacity-10 text-primary"
+                    : "hover:bg-neutral-100 text-neutral-500"
+                )}
+                onClick={() => {
+                  setIsMobileSidebarOpen(false);
+                  window.location.href = item.href;
+                }}
+              >
+                <span className="mr-3">{item.icon}</span>
+                <span>{item.title}</span>
+              </Button>
             ))}
           </div>
         ))}

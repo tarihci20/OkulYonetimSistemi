@@ -3,7 +3,11 @@ import type { User, Teacher, Subject, Class, Period, Schedule, DutyLocation, Dut
 import type { InsertUser, InsertTeacher, InsertSubject, InsertClass, InsertPeriod, InsertSchedule, InsertDutyLocation, InsertDuty, InsertAbsence, InsertSubstitution, InsertExtraLesson } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
+import connectPg from "connect-pg-simple";
+import { db, pool } from "./db";
+import { eq, and, desc, asc, sql } from "drizzle-orm";
 
+const PostgresSessionStore = connectPg(session);
 const MemoryStore = createMemoryStore(session);
 
 // Define storage interface
@@ -92,7 +96,7 @@ export interface IStorage {
   deleteExtraLesson(id: number): Promise<boolean>;
   
   // Session store for authentication
-  sessionStore: session.SessionStore;
+  sessionStore: session.Store;
 }
 
 export class MemStorage implements IStorage {
@@ -120,7 +124,7 @@ export class MemStorage implements IStorage {
   private substitutionIdCounter: number;
   private extraLessonIdCounter: number;
   
-  sessionStore: session.SessionStore;
+  sessionStore: session.Store;
   
   constructor() {
     this.usersData = new Map();
@@ -660,4 +664,366 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class DatabaseStorage implements IStorage {
+  sessionStore: session.Store;
+
+  constructor() {
+    this.sessionStore = new PostgresSessionStore({ 
+      pool, 
+      createTableIfMissing: true 
+    });
+  }
+
+  // User Methods
+  async getUser(id: number): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.id, id));
+    return result[0];
+  }
+  
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.username, username));
+    return result[0];
+  }
+  
+  async createUser(user: InsertUser): Promise<User> {
+    const result = await db.insert(users).values(user).returning();
+    return result[0];
+  }
+  
+  async updateUserLastLogin(id: number): Promise<User | undefined> {
+    const result = await db
+      .update(users)
+      .set({ lastLogin: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return result[0];
+  }
+  
+  // Teacher Methods
+  async getAllTeachers(): Promise<Teacher[]> {
+    return await db.select().from(teachers);
+  }
+  
+  async getTeacher(id: number): Promise<Teacher | undefined> {
+    const result = await db.select().from(teachers).where(eq(teachers.id, id));
+    return result[0];
+  }
+  
+  async createTeacher(teacher: InsertTeacher): Promise<Teacher> {
+    const result = await db.insert(teachers).values(teacher).returning();
+    return result[0];
+  }
+  
+  async updateTeacher(id: number, teacherData: Partial<InsertTeacher>): Promise<Teacher | undefined> {
+    const result = await db
+      .update(teachers)
+      .set(teacherData)
+      .where(eq(teachers.id, id))
+      .returning();
+    return result[0];
+  }
+  
+  async deleteTeacher(id: number): Promise<boolean> {
+    const result = await db.delete(teachers).where(eq(teachers.id, id));
+    return result.count > 0;
+  }
+  
+  // Subject Methods
+  async getAllSubjects(): Promise<Subject[]> {
+    return await db.select().from(subjects);
+  }
+  
+  async getSubject(id: number): Promise<Subject | undefined> {
+    const result = await db.select().from(subjects).where(eq(subjects.id, id));
+    return result[0];
+  }
+  
+  async createSubject(subject: InsertSubject): Promise<Subject> {
+    const result = await db.insert(subjects).values(subject).returning();
+    return result[0];
+  }
+  
+  async updateSubject(id: number, subjectData: Partial<InsertSubject>): Promise<Subject | undefined> {
+    const result = await db
+      .update(subjects)
+      .set(subjectData)
+      .where(eq(subjects.id, id))
+      .returning();
+    return result[0];
+  }
+  
+  async deleteSubject(id: number): Promise<boolean> {
+    const result = await db.delete(subjects).where(eq(subjects.id, id));
+    return result.count > 0;
+  }
+  
+  // Class Methods
+  async getAllClasses(): Promise<Class[]> {
+    return await db.select().from(classes);
+  }
+  
+  async getClass(id: number): Promise<Class | undefined> {
+    const result = await db.select().from(classes).where(eq(classes.id, id));
+    return result[0];
+  }
+  
+  async createClass(classObj: InsertClass): Promise<Class> {
+    const result = await db.insert(classes).values(classObj).returning();
+    return result[0];
+  }
+  
+  async updateClass(id: number, classData: Partial<InsertClass>): Promise<Class | undefined> {
+    const result = await db
+      .update(classes)
+      .set(classData)
+      .where(eq(classes.id, id))
+      .returning();
+    return result[0];
+  }
+  
+  async deleteClass(id: number): Promise<boolean> {
+    const result = await db.delete(classes).where(eq(classes.id, id));
+    return result.count > 0;
+  }
+  
+  // Period Methods
+  async getAllPeriods(): Promise<Period[]> {
+    return await db.select().from(periods);
+  }
+  
+  async getPeriod(id: number): Promise<Period | undefined> {
+    const result = await db.select().from(periods).where(eq(periods.id, id));
+    return result[0];
+  }
+  
+  async createPeriod(period: InsertPeriod): Promise<Period> {
+    const result = await db.insert(periods).values(period).returning();
+    return result[0];
+  }
+  
+  async updatePeriod(id: number, periodData: Partial<InsertPeriod>): Promise<Period | undefined> {
+    const result = await db
+      .update(periods)
+      .set(periodData)
+      .where(eq(periods.id, id))
+      .returning();
+    return result[0];
+  }
+  
+  async deletePeriod(id: number): Promise<boolean> {
+    const result = await db.delete(periods).where(eq(periods.id, id));
+    return result.count > 0;
+  }
+  
+  // Schedule Methods
+  async getAllSchedules(): Promise<Schedule[]> {
+    return await db.select().from(schedules);
+  }
+  
+  async getSchedulesByTeacher(teacherId: number): Promise<Schedule[]> {
+    return await db.select().from(schedules).where(eq(schedules.teacherId, teacherId));
+  }
+  
+  async getSchedulesByClass(classId: number): Promise<Schedule[]> {
+    return await db.select().from(schedules).where(eq(schedules.classId, classId));
+  }
+  
+  async getSchedulesByDay(dayOfWeek: number): Promise<Schedule[]> {
+    return await db.select().from(schedules).where(eq(schedules.dayOfWeek, dayOfWeek));
+  }
+  
+  async createSchedule(schedule: InsertSchedule): Promise<Schedule> {
+    const result = await db.insert(schedules).values(schedule).returning();
+    return result[0];
+  }
+  
+  async updateSchedule(id: number, scheduleData: Partial<InsertSchedule>): Promise<Schedule | undefined> {
+    const result = await db
+      .update(schedules)
+      .set(scheduleData)
+      .where(eq(schedules.id, id))
+      .returning();
+    return result[0];
+  }
+  
+  async deleteSchedule(id: number): Promise<boolean> {
+    const result = await db.delete(schedules).where(eq(schedules.id, id));
+    return result.count > 0;
+  }
+  
+  // Duty Location Methods
+  async getAllDutyLocations(): Promise<DutyLocation[]> {
+    return await db.select().from(dutyLocations);
+  }
+  
+  async getDutyLocation(id: number): Promise<DutyLocation | undefined> {
+    const result = await db.select().from(dutyLocations).where(eq(dutyLocations.id, id));
+    return result[0];
+  }
+  
+  async createDutyLocation(location: InsertDutyLocation): Promise<DutyLocation> {
+    const result = await db.insert(dutyLocations).values(location).returning();
+    return result[0];
+  }
+  
+  async updateDutyLocation(id: number, locationData: Partial<InsertDutyLocation>): Promise<DutyLocation | undefined> {
+    const result = await db
+      .update(dutyLocations)
+      .set(locationData)
+      .where(eq(dutyLocations.id, id))
+      .returning();
+    return result[0];
+  }
+  
+  async deleteDutyLocation(id: number): Promise<boolean> {
+    const result = await db.delete(dutyLocations).where(eq(dutyLocations.id, id));
+    return result.count > 0;
+  }
+  
+  // Duty Methods
+  async getAllDuties(): Promise<Duty[]> {
+    return await db.select().from(duties);
+  }
+  
+  async getDutiesByTeacher(teacherId: number): Promise<Duty[]> {
+    return await db.select().from(duties).where(eq(duties.teacherId, teacherId));
+  }
+  
+  async getDutiesByDay(dayOfWeek: number): Promise<Duty[]> {
+    return await db.select().from(duties).where(eq(duties.dayOfWeek, dayOfWeek));
+  }
+  
+  async createDuty(duty: InsertDuty): Promise<Duty> {
+    const result = await db.insert(duties).values(duty).returning();
+    return result[0];
+  }
+  
+  async updateDuty(id: number, dutyData: Partial<InsertDuty>): Promise<Duty | undefined> {
+    const result = await db
+      .update(duties)
+      .set(dutyData)
+      .where(eq(duties.id, id))
+      .returning();
+    return result[0];
+  }
+  
+  async deleteDuty(id: number): Promise<boolean> {
+    const result = await db.delete(duties).where(eq(duties.id, id));
+    return result.count > 0;
+  }
+  
+  // Absence Methods
+  async getAllAbsences(): Promise<Absence[]> {
+    return await db.select().from(absences);
+  }
+  
+  async getAbsencesByTeacher(teacherId: number): Promise<Absence[]> {
+    return await db.select().from(absences).where(eq(absences.teacherId, teacherId));
+  }
+  
+  async getAbsencesByDate(date: Date): Promise<Absence[]> {
+    const dateString = date.toISOString().split('T')[0];
+    return await db.select().from(absences).where(
+      and(
+        eq(absences.startDate.toString(), dateString),
+        eq(absences.endDate.toString(), dateString)
+      )
+    );
+  }
+  
+  async createAbsence(absence: InsertAbsence): Promise<Absence> {
+    const result = await db.insert(absences).values(absence).returning();
+    return result[0];
+  }
+  
+  async updateAbsence(id: number, absenceData: Partial<InsertAbsence>): Promise<Absence | undefined> {
+    const result = await db
+      .update(absences)
+      .set(absenceData)
+      .where(eq(absences.id, id))
+      .returning();
+    return result[0];
+  }
+  
+  async deleteAbsence(id: number): Promise<boolean> {
+    const result = await db.delete(absences).where(eq(absences.id, id));
+    return result.count > 0;
+  }
+  
+  // Substitution Methods
+  async getAllSubstitutions(): Promise<Substitution[]> {
+    return await db.select().from(substitutions);
+  }
+  
+  async getSubstitutionsByDate(date: Date): Promise<Substitution[]> {
+    const dateString = date.toISOString().split('T')[0];
+    return await db.select().from(substitutions).where(eq(substitutions.date.toString(), dateString));
+  }
+  
+  async getSubstitutionsByTeacher(teacherId: number): Promise<Substitution[]> {
+    return await db.select().from(substitutions).where(eq(substitutions.teacherId, teacherId));
+  }
+  
+  async getSubstitutionsBySubstituteTeacher(substituteTeacherId: number): Promise<Substitution[]> {
+    return await db.select().from(substitutions).where(eq(substitutions.substituteTeacherId, substituteTeacherId));
+  }
+  
+  async createSubstitution(substitution: InsertSubstitution): Promise<Substitution> {
+    const result = await db.insert(substitutions).values(substitution).returning();
+    return result[0];
+  }
+  
+  async updateSubstitution(id: number, substitutionData: Partial<InsertSubstitution>): Promise<Substitution | undefined> {
+    const result = await db
+      .update(substitutions)
+      .set(substitutionData)
+      .where(eq(substitutions.id, id))
+      .returning();
+    return result[0];
+  }
+  
+  async deleteSubstitution(id: number): Promise<boolean> {
+    const result = await db.delete(substitutions).where(eq(substitutions.id, id));
+    return result.count > 0;
+  }
+  
+  // Extra Lesson Methods
+  async getAllExtraLessons(): Promise<ExtraLesson[]> {
+    return await db.select().from(extraLessons);
+  }
+  
+  async getExtraLessonsByTeacher(teacherId: number): Promise<ExtraLesson[]> {
+    return await db.select().from(extraLessons).where(eq(extraLessons.teacherId, teacherId));
+  }
+  
+  async getExtraLessonsByMonthYear(month: number, year: number): Promise<ExtraLesson[]> {
+    // Filter by month and year using Date object properties
+    const lessons = await db.select().from(extraLessons);
+    return lessons.filter(lesson => {
+      const date = new Date(lesson.date);
+      return date.getMonth() + 1 === month && date.getFullYear() === year;
+    });
+  }
+  
+  async createExtraLesson(extraLesson: InsertExtraLesson): Promise<ExtraLesson> {
+    const result = await db.insert(extraLessons).values(extraLesson).returning();
+    return result[0];
+  }
+  
+  async updateExtraLesson(id: number, extraLessonData: Partial<InsertExtraLesson>): Promise<ExtraLesson | undefined> {
+    const result = await db
+      .update(extraLessons)
+      .set(extraLessonData)
+      .where(eq(extraLessons.id, id))
+      .returning();
+    return result[0];
+  }
+  
+  async deleteExtraLesson(id: number): Promise<boolean> {
+    const result = await db.delete(extraLessons).where(eq(extraLessons.id, id));
+    return result.count > 0;
+  }
+}
+
+// Export database storage instance
+export const storage = new DatabaseStorage();

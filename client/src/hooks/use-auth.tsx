@@ -22,28 +22,70 @@ type LoginData = Pick<InsertUser, "username" | "password">;
 export const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
+  
+  // Kullanıcı verilerini getir
   const {
     data: user,
     error,
     isLoading,
-  } = useQuery<SelectUser | undefined, Error>({
+    refetch: refetchUser
+  } = useQuery<SelectUser | null>({
     queryKey: ["/api/user"],
-    queryFn: getQueryFn({ on401: "returnNull" }),
+    queryFn: async () => {
+      try {
+        const response = await fetch("/api/user", {
+          credentials: "include" // Çerezleri dahil etmek için önemli
+        });
+        
+        if (response.status === 401) {
+          return null;
+        }
+        
+        if (!response.ok) {
+          throw new Error(`API hatası: ${response.status}`);
+        }
+        
+        return await response.json();
+      } catch (error) {
+        console.error("Kullanıcı bilgileri alınırken hata:", error);
+        return null;
+      }
+    },
+    retry: false,
+    staleTime: 60000 // 1 dakika
   });
 
+  // Giriş (login) fonksiyonu
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
-      const res = await apiRequest("POST", "/api/login", credentials);
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(credentials),
+        credentials: "include" // Çerezleri dahil et
+      });
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || "Giriş başarısız");
+      }
+      
       return await res.json();
     },
-    onSuccess: (user: SelectUser) => {
-      queryClient.setQueryData(["/api/user"], user);
+    onSuccess: (userData: SelectUser) => {
+      // Başarılı giriş
+      queryClient.setQueryData(["/api/user"], userData);
+      refetchUser(); // Kullanıcı verilerini yenile
+      
       toast({
-        title: "Giriş başarılı",
-        description: "Hoş geldiniz!",
+        title: "Başarılı Giriş",
+        description: "Hoş geldiniz, yönlendiriliyorsunuz...",
       });
     },
     onError: (error: Error) => {
+      // Hata durumu
       toast({
         title: "Giriş başarısız",
         description: error.message,
@@ -52,19 +94,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
+  // Kayıt (register) fonksiyonu
   const registerMutation = useMutation({
-    mutationFn: async (credentials: InsertUser) => {
-      const res = await apiRequest("POST", "/api/register", credentials);
+    mutationFn: async (userData: InsertUser) => {
+      const res = await fetch("/api/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(userData),
+        credentials: "include" // Çerezleri dahil et
+      });
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Kayıt başarısız");
+      }
+      
       return await res.json();
     },
-    onSuccess: (user: SelectUser) => {
-      queryClient.setQueryData(["/api/user"], user);
+    onSuccess: (userData: SelectUser) => {
+      // Başarılı kayıt
+      queryClient.setQueryData(["/api/user"], userData);
+      refetchUser(); // Kullanıcı verilerini yenile
+      
       toast({
-        title: "Kayıt başarılı",
-        description: "Hesabınız oluşturuldu.",
+        title: "Kayıt Başarılı",
+        description: "Hesabınız oluşturuldu ve giriş yapıldı.",
       });
     },
     onError: (error: Error) => {
+      // Hata durumu
       toast({
         title: "Kayıt başarısız",
         description: error.message,
@@ -73,20 +133,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
+  // Çıkış (logout) fonksiyonu
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("POST", "/api/logout");
+      const res = await fetch("/api/logout", {
+        method: "POST",
+        credentials: "include" // Çerezleri dahil et
+      });
+      
+      if (!res.ok) {
+        throw new Error("Çıkış yapılırken hata oluştu");
+      }
     },
     onSuccess: () => {
+      // Başarılı çıkış
       queryClient.setQueryData(["/api/user"], null);
+      queryClient.invalidateQueries(); // Tüm sorguları geçersiz kıl
+      
       toast({
-        title: "Çıkış yapıldı",
-        description: "Oturumunuz sonlandırıldı.",
+        title: "Çıkış Yapıldı",
+        description: "Güvenli bir şekilde çıkış yaptınız.",
       });
     },
     onError: (error: Error) => {
+      // Hata durumu
       toast({
-        title: "Çıkış yapılamadı",
+        title: "Çıkış başarısız",
         description: error.message,
         variant: "destructive",
       });

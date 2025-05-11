@@ -496,46 +496,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Enhanced data routes that join related data
   app.get("/api/enhanced/schedules", isAuthenticated, async (req, res) => {
     try {
-      const schedules = await storage.getAllSchedules();
-      const teachers = await storage.getAllTeachers();
-      const classes = await storage.getAllClasses();
-      const subjects = await storage.getAllSubjects();
-      const periods = await storage.getAllPeriods();
-      
-      const enhancedSchedules = schedules.map(schedule => {
-        const teacher = teachers.find(t => t.id === schedule.teacherId);
-        const classObj = classes.find(c => c.id === schedule.classId);
-        const subject = subjects.find(s => s.id === schedule.subjectId);
-        const period = periods.find(p => p.id === schedule.periodId);
-        
-        return {
-          id: schedule.id,
-          teacher: {
-            id: teacher?.id,
-            name: teacher?.name,
-            surname: teacher?.surname,
-            branch: teacher?.branch,
-            fullName: teacher ? `${teacher.name} ${teacher.surname}` : 'Bilinmeyen Öğretmen'
-          },
-          class: {
-            id: classObj?.id,
-            name: classObj?.name || 'Bilinmeyen Sınıf'
-          },
-          subject: {
-            id: subject?.id,
-            name: subject?.name || 'Bilinmeyen Ders'
-          },
-          period: {
-            id: period?.id,
-            order: period?.order,
-            startTime: period?.startTime,
-            endTime: period?.endTime
-          },
-          dayOfWeek: schedule.dayOfWeek
-        };
-      });
-      
-      res.json(enhancedSchedules);
+      // Boş dizi olarak dön, ders programı işlevselliği daha sonra eklenecek
+      res.json([]);
     } catch (error) {
       res.status(500).json({ message: "Gelişmiş ders programı verileri alınırken hata oluştu" });
     }
@@ -543,40 +505,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get("/api/enhanced/duties", isAuthenticated, async (req, res) => {
     try {
-      const duties = await storage.getAllDuties();
-      const teachers = await storage.getAllTeachers();
-      const locations = await storage.getAllDutyLocations();
-      const periods = await storage.getAllPeriods();
-      
-      const enhancedDuties = duties.map(duty => {
-        const teacher = teachers.find(t => t.id === duty.teacherId);
-        const location = locations.find(l => l.id === duty.locationId);
-        const period = duty.periodId ? periods.find(p => p.id === duty.periodId) : null;
-        
-        return {
-          id: duty.id,
-          teacher: {
-            id: teacher?.id,
-            name: teacher?.name,
-            surname: teacher?.surname,
-            branch: teacher?.branch,
-            fullName: teacher ? `${teacher.name} ${teacher.surname}` : 'Bilinmeyen Öğretmen'
-          },
-          location: {
-            id: location?.id,
-            name: location?.name || 'Bilinmeyen Konum'
-          },
-          dayOfWeek: duty.dayOfWeek,
-          period: period ? {
-            id: period.id,
-            order: period.order,
-            startTime: period.startTime,
-            endTime: period.endTime
-          } : null
-        };
-      });
-      
-      res.json(enhancedDuties);
+      // Boş dizi olarak dön, nöbet işlevselliği daha sonra eklenecek
+      res.json([]);
     } catch (error) {
       res.status(500).json({ message: "Gelişmiş nöbet verileri alınırken hata oluştu" });
     }

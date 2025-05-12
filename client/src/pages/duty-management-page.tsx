@@ -586,7 +586,7 @@ const DutyManagementPage: React.FC = () => {
             </TabsContent>
             
             <TabsContent value="calendar">
-              <DutyCalendar duties={duties} />
+              <DutyCalendar duties={duties || []} />
             </TabsContent>
           </Tabs>
         </CardContent>

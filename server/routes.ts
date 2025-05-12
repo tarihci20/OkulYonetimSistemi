@@ -187,13 +187,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Geçersiz ID formatı" });
       }
       
+      // Silmeden önce böyle bir period olup olmadığını kontrol et
+      const periodToDelete = await storage.getPeriod(id);
+      if (!periodToDelete) {
+        return res.status(404).json({ message: "Ders saati bulunamadı" });
+      }
+      
       const result = await storage.deletePeriod(id);
       if (!result) {
-        return res.status(404).json({ message: "Ders saati bulunamadı" });
+        return res.status(500).json({ message: "Silme işlemi başarısız oldu" });
       }
       
       res.status(204).send();
     } catch (error) {
+      console.error("Silme hatası:", error);
       res.status(500).json({ message: "Ders saati silinirken hata oluştu" });
     }
   });

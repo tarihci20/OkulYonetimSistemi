@@ -811,8 +811,20 @@ export class DatabaseStorage implements IStorage {
   }
   
   async deletePeriod(id: number): Promise<boolean> {
-    const result = await db.delete(periods).where(eq(periods.id, id));
-    return result.count > 0;
+    try {
+      // Önce period var mı kontrol et
+      const period = await this.getPeriod(id);
+      if (!period) {
+        return false;
+      }
+      
+      // Varsa sil
+      const result = await db.delete(periods).where(eq(periods.id, id));
+      return result.count > 0;
+    } catch (error) {
+      console.error("Dönem silme hatası:", error);
+      return false;
+    }
   }
   
   // Schedule Methods

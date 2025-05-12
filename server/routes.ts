@@ -134,6 +134,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  app.put("/api/classes/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Geçersiz ID formatı" });
+      }
+      
+      const validatedData = insertClassSchema.partial().parse(req.body);
+      const updatedClass = await storage.updateClass(id, validatedData);
+      
+      if (!updatedClass) {
+        return res.status(404).json({ message: "Sınıf bulunamadı" });
+      }
+      
+      res.json(updatedClass);
+    } catch (error) {
+      console.error("Sınıf güncelleme hatası:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Geçersiz veri", errors: error.errors });
+      }
+      res.status(500).json({ message: "Sınıf güncellenirken hata oluştu" });
+    }
+  });
+  
+  app.delete("/api/classes/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Geçersiz ID formatı" });
+      }
+      
+      const classToDelete = await storage.getClass(id);
+      if (!classToDelete) {
+        return res.status(404).json({ message: "Sınıf bulunamadı" });
+      }
+      
+      const result = await storage.deleteClass(id);
+      if (!result) {
+        return res.status(500).json({ message: "Silme işlemi başarısız oldu" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      console.error("Sınıf silme hatası:", error);
+      res.status(500).json({ message: "Sınıf silinirken hata oluştu" });
+    }
+  });
+  
   // Period routes
   app.get("/api/periods", isAuthenticated, async (req, res) => {
     try {

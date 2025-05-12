@@ -471,6 +471,38 @@ const DutyManagementPage: React.FC = () => {
             </div>
           </CardTitle>
           <CardDescription>Öğretmenlerin nöbet yer ve zamanları</CardDescription>
+          
+          <div className="mt-4 border rounded-md p-4">
+            <h3 className="text-lg font-medium mb-2">Nöbet Yerleri</h3>
+            <div className="space-y-2">
+              {locations && locations.map(location => (
+                <div key={location.id} className="flex items-center justify-between border-b pb-2">
+                  <div className="flex items-center">
+                    <MapPin className="mr-2 h-4 w-4 text-primary" />
+                    <span>{location.name}</span>
+                  </div>
+                  <div>
+                    <Button 
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleEditLocation(location)}
+                      title="Düzenle"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDeleteLocation(location.id)}
+                      title="Sil"
+                    >
+                      <Trash className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col md:flex-row gap-4 mb-6">

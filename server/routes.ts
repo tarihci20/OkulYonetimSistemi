@@ -326,6 +326,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  app.patch("/api/duty-locations/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Geçersiz ID formatı" });
+      }
+      
+      const validatedData = insertDutyLocationSchema.partial().parse(req.body);
+      const updatedLocation = await storage.updateDutyLocation(id, validatedData);
+      
+      if (!updatedLocation) {
+        return res.status(404).json({ message: "Nöbet yeri bulunamadı" });
+      }
+      
+      res.json(updatedLocation);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Geçersiz veri", errors: error.errors });
+      }
+      res.status(500).json({ message: "Nöbet yeri güncellenirken hata oluştu" });
+    }
+  });
+  
+  app.delete("/api/duty-locations/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Geçersiz ID formatı" });
+      }
+      
+      const locationToDelete = await storage.getDutyLocation(id);
+      if (!locationToDelete) {
+        return res.status(404).json({ message: "Nöbet yeri bulunamadı" });
+      }
+      
+      const result = await storage.deleteDutyLocation(id);
+      if (!result) {
+        return res.status(500).json({ message: "Silme işlemi başarısız oldu" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      console.error("Nöbet yeri silme hatası:", error);
+      res.status(500).json({ message: "Nöbet yeri silinirken hata oluştu" });
+    }
+  });
+  
   // Duty routes
   app.get("/api/duties", isAuthenticated, async (req, res) => {
     try {

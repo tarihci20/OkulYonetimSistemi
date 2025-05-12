@@ -710,7 +710,7 @@ const DutyManagementPage: React.FC = () => {
                   <SelectContent>
                     {teachers && teachers.map(teacher => (
                       <SelectItem key={teacher.id} value={teacher.id.toString()}>
-                        {teacher.fullName} ({teacher.branch})
+                        {teacher.fullName || `${teacher.name} ${teacher.surname}`} ({teacher.branch})
                       </SelectItem>
                     ))}
                   </SelectContent>

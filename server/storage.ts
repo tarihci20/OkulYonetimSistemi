@@ -701,7 +701,11 @@ export class DatabaseStorage implements IStorage {
   
   // Teacher Methods
   async getAllTeachers(): Promise<Teacher[]> {
-    return await db.select().from(teachers);
+    const teachersList = await db.select().from(teachers);
+    return teachersList.map(teacher => ({
+      ...teacher,
+      fullName: `${teacher.name} ${teacher.surname}`
+    }));
   }
   
   async getTeacher(id: number): Promise<Teacher | undefined> {

@@ -667,13 +667,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
             period = await storage.getPeriod(duty.periodId);
           }
           
+          // Öğretmen adı-soyadını birleştirip bir nesne oluştur
+          const teacherWithFullName = teacher ? {
+            id: teacher.id,
+            name: teacher.name,
+            surname: teacher.surname, 
+            branch: teacher.branch,
+            fullName: `${teacher.name} ${teacher.surname}`
+          } : undefined;
+          
           return {
             ...duty,
-            teacher: teacher ? {
-              ...teacher,
-              // Teacher schemaları için fullName özelliğini ekle
-              fullName: `${teacher.name} ${teacher.surname}`
-            } : undefined,
+            teacher: teacherWithFullName,
             location: location,
             period: period
           };

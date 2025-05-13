@@ -610,9 +610,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get("/api/enhanced/duties", isAuthenticated, async (req, res) => {
     try {
-      // Boş dizi olarak dön, nöbet işlevselliği daha sonra eklenecek
-      res.json([]);
+      // Tüm nöbet görevlerini al
+      const allDuties = await storage.getAllDuties();
+      
+      // Nöbet görevlerini zenginleştir - öğretmen ve lokasyon bilgilerini ekle
+      const enhancedDuties = await Promise.all(
+        allDuties.map(async (duty) => {
+          const teacher = await storage.getTeacher(duty.teacherId);
+          const location = await storage.getDutyLocation(duty.locationId);
+          
+          // Eğer period ID varsa, period bilgisini de ekle
+          let period = null;
+          if (duty.periodId) {
+            period = await storage.getPeriod(duty.periodId);
+          }
+          
+          return {
+            ...duty,
+            teacher: teacher ? {
+              ...teacher,
+              fullName: teacher.fullName || `${teacher.name} ${teacher.surname}`
+            } : undefined,
+            location: location,
+            period: period
+          };
+        })
+      );
+      
+      res.json(enhancedDuties);
     } catch (error) {
+      console.error("Gelişmiş nöbet verileri hatası:", error);
       res.status(500).json({ message: "Gelişmiş nöbet verileri alınırken hata oluştu" });
     }
   });

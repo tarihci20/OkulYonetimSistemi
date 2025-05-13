@@ -78,12 +78,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.delete("/api/teachers/:id", isAdmin, async (req, res) => {
     try {
-      const result = await storage.deleteTeacher(parseInt(req.params.id));
-      if (!result) {
+      // Önce öğretmenin var olduğunu kontrol edelim
+      const teacher = await storage.getTeacher(parseInt(req.params.id));
+      if (!teacher) {
         return res.status(404).json({ message: "Öğretmen bulunamadı" });
       }
+      
+      // Öğretmeni silme işlemini gerçekleştirelim
+      await storage.deleteTeacher(parseInt(req.params.id));
       res.status(204).send();
     } catch (error) {
+      console.error("Öğretmen silme hatası:", error);
       res.status(500).json({ message: "Öğretmen silinirken hata oluştu" });
     }
   });
@@ -361,10 +366,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Nöbet yeri bulunamadı" });
       }
       
-      const result = await storage.deleteDutyLocation(id);
-      if (!result) {
-        return res.status(500).json({ message: "Silme işlemi başarısız oldu" });
-      }
+      // Silme işlemini gerçekleştir
+      await storage.deleteDutyLocation(id);
       
       res.status(204).send();
     } catch (error) {

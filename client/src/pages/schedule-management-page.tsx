@@ -4,7 +4,7 @@ import ScheduleManagement from '@/components/admin/schedule-management';
 
 const ScheduleManagementPage: React.FC = () => {
   return (
-    <DashboardLayout>
+    <DashboardLayout title="Ders Programı Yönetimi">
       <ScheduleManagement />
     </DashboardLayout>
   );

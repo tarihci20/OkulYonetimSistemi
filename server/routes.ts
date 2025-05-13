@@ -350,6 +350,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  app.patch("/api/schedules/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Geçersiz ID formatı" });
+      }
+      
+      const validatedData = insertScheduleSchema.partial().parse(req.body);
+      const updatedSchedule = await storage.updateSchedule(id, validatedData);
+      
+      if (!updatedSchedule) {
+        return res.status(404).json({ message: "Ders programı bulunamadı" });
+      }
+      
+      res.json(updatedSchedule);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Geçersiz veri", errors: error.errors });
+      }
+      res.status(500).json({ message: "Ders programı güncellenirken hata oluştu" });
+    }
+  });
+  
+  app.delete("/api/schedules/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Geçersiz ID formatı" });
+      }
+      
+      const success = await storage.deleteSchedule(id);
+      if (!success) {
+        return res.status(404).json({ message: "Ders programı bulunamadı" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Ders programı silinirken hata oluştu" });
+    }
+  });
+  
   // Duty location routes
   app.get("/api/duty-locations", isAuthenticated, async (req, res) => {
     try {

@@ -4,7 +4,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { useTurkishDate } from "@/hooks/use-turkish-date";
 import { 
   LayoutDashboard, 
-  Calendar, 
+  Calendar,
+  CalendarDays, 
   ClipboardList, 
   UserX, 
   PlusCircle, 
@@ -74,6 +75,12 @@ export default function DashboardLayout({ children, title }: DashboardLayoutProp
           href: "/schedule",
           icon: <Calendar className="w-4 h-4" />,
           isActive: location === "/schedule",
+        },
+        {
+          title: "Ders Programı Yönetimi",
+          href: "/schedule-management",
+          icon: <Calendar className="w-4 h-4" />,
+          isActive: location === "/schedule-management",
         },
         {
           title: "Zil ve Teneffüs Saatleri",

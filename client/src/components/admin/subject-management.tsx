@@ -99,7 +99,7 @@ const SubjectManagement: React.FC = () => {
   // Update subject mutation
   const updateSubjectMutation = useMutation({
     mutationFn: async (data: { id: number; values: SubjectFormValues }) => {
-      return await apiRequest("PUT", `/api/subjects/${data.id}`, data.values);
+      return await apiRequest("PATCH", `/api/subjects/${data.id}`, data.values);
     },
     onSuccess: () => {
       toast({

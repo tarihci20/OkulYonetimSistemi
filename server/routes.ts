@@ -115,6 +115,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Ders eklenirken hata oluştu" });
     }
   });
+
+  app.patch("/api/subjects/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Geçersiz ID formatı" });
+      }
+
+      // Sadece name özelliğini güncellemeyi kabul eder
+      const validatedData = insertSubjectSchema.partial().parse(req.body);
+      
+      const updatedSubject = await storage.updateSubject(id, validatedData);
+      if (!updatedSubject) {
+        return res.status(404).json({ message: "Ders bulunamadı" });
+      }
+      
+      res.json(updatedSubject);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Geçersiz veri", errors: error.errors });
+      }
+      res.status(500).json({ message: "Ders güncellenirken hata oluştu" });
+    }
+  });
+
+  app.delete("/api/subjects/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Geçersiz ID formatı" });
+      }
+      
+      const success = await storage.deleteSubject(id);
+      if (!success) {
+        return res.status(404).json({ message: "Ders bulunamadı" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Ders silinirken hata oluştu" });
+    }
+  });
   
   // Class routes
   app.get("/api/classes", isAuthenticated, async (req, res) => {
@@ -629,7 +671,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             ...duty,
             teacher: teacher ? {
               ...teacher,
-              fullName: teacher.fullName || `${teacher.name} ${teacher.surname}`
+              // Teacher schemaları için fullName özelliğini ekle
+              fullName: `${teacher.name} ${teacher.surname}`
             } : undefined,
             location: location,
             period: period

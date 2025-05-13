@@ -271,7 +271,7 @@ const SubjectManagement: React.FC = () => {
       
       <DataTable 
         columns={columns}
-        data={subjects || []}
+        data={subjects && Array.isArray(subjects) ? subjects : []}
         searchKey="name"
         searchPlaceholder="Ders adına göre ara..."
       />

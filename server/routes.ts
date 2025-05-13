@@ -684,9 +684,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Enhanced data routes that join related data
   app.get("/api/enhanced/schedules", isAuthenticated, async (req, res) => {
     try {
-      // Boş dizi olarak dön, ders programı işlevselliği daha sonra eklenecek
-      res.json([]);
+      // Tüm ders programı verilerini al
+      const allSchedules = await storage.getAllSchedules();
+      
+      // Her program için ilgili detayları ekle
+      const enhancedSchedules = await Promise.all(
+        allSchedules.map(async (schedule) => {
+          const teacher = await storage.getTeacher(schedule.teacherId);
+          const classObj = await storage.getClass(schedule.classId);
+          const subject = await storage.getSubject(schedule.subjectId);
+          const period = await storage.getPeriod(schedule.periodId);
+          
+          return {
+            ...schedule,
+            teacher: teacher ? {
+              ...teacher,
+              fullName: `${teacher.name} ${teacher.surname}`
+            } : undefined,
+            class: classObj,
+            subject: subject,
+            period: period
+          };
+        })
+      );
+      
+      res.json(enhancedSchedules);
     } catch (error) {
+      console.error("Gelişmiş ders programı hatası:", error);
       res.status(500).json({ message: "Gelişmiş ders programı verileri alınırken hata oluştu" });
     }
   });

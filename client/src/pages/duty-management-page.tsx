@@ -134,9 +134,18 @@ const DutyManagementPage: React.FC = () => {
   });
   
   // Fetch all teachers for the duty assignment form
-  const { data: teachers, isLoading: teachersLoading } = useQuery<Teacher[]>({
+  const { data: teachersData, isLoading: teachersLoading } = useQuery<Teacher[]>({
     queryKey: ['/api/teachers']
   });
+
+  // Ensure all teachers have fullName property
+  const teachers = React.useMemo(() => {
+    if (!teachersData) return [];
+    return teachersData.map(teacher => ({
+      ...teacher,
+      fullName: teacher.fullName || `${teacher.name} ${teacher.surname}`
+    }));
+  }, [teachersData]);
   
   // Nöbet Yeri Ekleme/Güncelleme mutation
   const locationMutation = useMutation({
@@ -710,7 +719,7 @@ const DutyManagementPage: React.FC = () => {
                   <SelectContent>
                     {teachers && teachers.map(teacher => (
                       <SelectItem key={teacher.id} value={teacher.id.toString()}>
-                        {teacher.fullName || `${teacher.name} ${teacher.surname}`} ({teacher.branch})
+                        {teacher.fullName} ({teacher.branch})
                       </SelectItem>
                     ))}
                   </SelectContent>

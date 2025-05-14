@@ -189,15 +189,48 @@ const TeacherManagement: React.FC = () => {
   const columns: ColumnDef<Teacher>[] = [
     {
       accessorKey: "name",
-      header: "İsim",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="px-0 font-medium"
+          >
+            İsim
+            {column.getIsSorted() === "asc" ? " ↑" : column.getIsSorted() === "desc" ? " ↓" : ""}
+          </Button>
+        )
+      },
     },
     {
       accessorKey: "surname",
-      header: "Soyisim",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="px-0 font-medium"
+          >
+            Soyisim
+            {column.getIsSorted() === "asc" ? " ↑" : column.getIsSorted() === "desc" ? " ↓" : ""}
+          </Button>
+        )
+      },
     },
     {
       accessorKey: "branch",
-      header: "Branş",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="px-0 font-medium"
+          >
+            Branş
+            {column.getIsSorted() === "asc" ? " ↑" : column.getIsSorted() === "desc" ? " ↓" : ""}
+          </Button>
+        )
+      },
     },
     {
       id: "actions",

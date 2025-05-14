@@ -166,7 +166,18 @@ const SubjectManagement: React.FC = () => {
   const columns: ColumnDef<Subject>[] = [
     {
       accessorKey: "name",
-      header: "Ders Adı",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="px-0 font-medium"
+          >
+            Ders Adı
+            {column.getIsSorted() === "asc" ? " ↑" : column.getIsSorted() === "desc" ? " ↓" : ""}
+          </Button>
+        )
+      },
     },
     {
       id: "actions",

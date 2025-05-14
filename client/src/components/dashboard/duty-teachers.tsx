@@ -114,7 +114,11 @@ const DutyTeachers: React.FC = () => {
                   </div>
                 </div>
                 <div className="ml-auto">
-                  <span className={`text-xs ${isTeacherOnDuty(dutyTeacher) ? 'bg-success bg-opacity-10 text-success' : 'bg-neutral-100 text-neutral-600'} px-2 py-1 rounded-full`}>
+                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                    isTeacherOnDuty(dutyTeacher) 
+                      ? 'bg-green-500 text-white' 
+                      : 'bg-neutral-200 text-neutral-600'
+                  }`}>
                     {isTeacherOnDuty(dutyTeacher) ? 'Aktif' : 'Pasif'}
                   </span>
                 </div>

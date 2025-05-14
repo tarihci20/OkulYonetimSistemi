@@ -646,14 +646,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Combined data endpoints for the frontend
   app.get("/api/dashboard/current-day", isAuthenticated, async (req, res) => {
     try {
-      // Set to Turkey time (GMT+3)
-      // Test için saati manuel olarak 16:28 olarak ayarlıyoruz
-      const turkishHour = 16;
-      const turkishMinute = 28;
-      
+      // Gerçek sistem saatini doğrudan alalım
       const now = new Date();
-      now.setHours(turkishHour);
-      now.setMinutes(turkishMinute);
       
       const dayOfWeek = now.getDay() === 0 ? 7 : now.getDay(); // Convert Sunday (0) to 7 for our system
       
@@ -694,9 +688,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         absences,
         substitutions,
         periods,
-        currentPeriod,
-        turkishHour,
-        turkishMinute
+        currentPeriod
       });
     } catch (error) {
       res.status(500).json({ message: "Günlük veri alınırken hata oluştu" });

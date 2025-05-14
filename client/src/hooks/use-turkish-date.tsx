@@ -32,24 +32,13 @@ export function useTurkishDate(options: TurkishDateOptions = {}) {
   const [date, setDate] = useState<Date>(new Date());
   
   useEffect(() => {
-    // Türkiye saatini (UTC+3) oluşturan ve her dakika otomatik olarak güncelleyen fonksiyon
+    // Gerçek bilgisayar saatini (yerel saati) kullanan fonksiyon
     const updateDate = () => {
-      // Şimdilik manuel olarak saati ayarlayalım
-      const now = new Date();
-      const turkishHour = 16; // Kullanıcıdan aldığımız bilgiye göre şu an saat 16:26
-      const turkishMinute = 26; 
-      
-      // Test sırasında zamanın ilerlemesini sağlamak için gerçek zamanın saniyelerini alalım
-      const seconds = now.getSeconds();
-      
-      // Bugünün tarihi ile saati birleştir
-      const turkeyDate = new Date();
-      turkeyDate.setHours(turkishHour);
-      turkeyDate.setMinutes(turkishMinute);
-      turkeyDate.setSeconds(seconds); // Saniyeler gerçek zamanla ilerlesin
+      // Direkt olarak bilgisayarın sistem saatini alalım
+      const localDate = new Date();
       
       // Değişiklikleri kaydet
-      setDate(turkeyDate);
+      setDate(localDate);
     };
     
     // Update immediately

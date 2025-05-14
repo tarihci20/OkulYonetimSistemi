@@ -32,9 +32,12 @@ export function useTurkishDate(options: TurkishDateOptions = {}) {
   const [date, setDate] = useState<Date>(new Date());
   
   useEffect(() => {
-    // Set timezone to Turkey
+    // Set timezone to Turkey (GMT+3)
     const updateDate = () => {
-      const turkeyDate = new Date();
+      // Türkiye'nin GMT+3 saat dilimini oluşturuyoruz
+      const now = new Date();
+      // UTC zamanı al ve üzerine Türkiye için 3 saat ekle
+      const turkeyDate = new Date(now.getTime() + (3 * 60 * 60 * 1000 - now.getTimezoneOffset() * 60 * 1000));
       setDate(turkeyDate);
     };
     

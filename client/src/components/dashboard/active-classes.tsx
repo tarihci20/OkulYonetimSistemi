@@ -55,27 +55,32 @@ const ActiveClasses: React.FC = () => {
   const { date, turkishDayOfWeek, formattedTime, formattedDate } = useTurkishDate({ updateInterval: 30000 });
   const dayOfWeek = date.getDay() === 0 ? 7 : date.getDay(); // 1-7 (Pazartesi-Pazar)
 
+  // Günlük otomatik yenileme için tarih anahtarı oluşturalım
+  const dateKey = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+  
   // Ders saatleri ve mevcut ders saati
   const { data: periodsData } = useQuery<Period[]>({
     queryKey: ["/api/periods"],
+    refetchInterval: 5 * 60 * 1000 // 5 dakikada bir yeniden kontrol et
   });
 
   // Mevcut ders saati hesaplama
   const currentPeriod = React.useMemo(() => {
     if (!periodsData || !Array.isArray(periodsData)) return null;
     
-    // Test için 8. dersi manuel olarak ayarla (gerçek saatte çalışacak şekilde kaldırılabilir)
-    // Normalde bu şekilde hesaplanır:
-    // const currentTime = formattedTime;
-    // return periodsData.find((period) => currentTime >= period.startTime && currentTime <= period.endTime);
+    // Gerçek saate göre hesaplama
+    const currentTime = formattedTime;
+    return periodsData.find((period) => currentTime >= period.startTime && currentTime <= period.endTime);
     
-    // Test için 8. dersi manuel olarak ayarla
-    return periodsData.find(p => p.order === 8);
-  }, [periodsData]);
+    // Test için belirli bir ders saatini manuel göstermek isterseniz açabilirsiniz:
+    // return periodsData.find(p => p.order === 8);
+  }, [periodsData, formattedTime]);
 
   // Tüm sınıf ve dersler için veri çekme
   const { data: schedulesData, isLoading } = useQuery<Schedule[]>({
-    queryKey: ['/api/enhanced/schedules']
+    queryKey: ['/api/enhanced/schedules', dateKey],
+    refetchInterval: 5 * 60 * 1000, // 5 dakikada bir yeniden kontrol et
+    // Gece yarısı sonrası otomatik yenilemek için tarih değiştiğinde refetch yap
   });
 
   // Sınıflar için dersler tablosu oluşturma
@@ -227,13 +232,18 @@ interface AvailableTeachersProps {
 }
 
 const AvailableTeachers: React.FC<AvailableTeachersProps> = ({ currentPeriod, dayOfWeek }) => {
+  // Tarih güncellemesi için key oluştur
+  const dateKey = `${new Date().getFullYear()}-${new Date().getMonth() + 1}-${new Date().getDate()}`;
+  
   // Tüm öğretmenleri ve ders programını çek
   const { data: teachers } = useQuery<any[]>({
-    queryKey: ["/api/teachers"]
+    queryKey: ["/api/teachers"],
+    refetchInterval: 10 * 60 * 1000 // 10 dakikada bir yeniden kontrol et
   });
   
   const { data: schedules } = useQuery<any[]>({
-    queryKey: ["/api/enhanced/schedules"]
+    queryKey: ["/api/enhanced/schedules", dateKey],
+    refetchInterval: 5 * 60 * 1000 // 5 dakikada bir yeniden kontrol et
   });
   
   // Mevcut ders saatinde programı boş olan öğretmenleri bul

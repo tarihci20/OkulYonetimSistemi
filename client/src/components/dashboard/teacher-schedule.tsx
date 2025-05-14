@@ -75,32 +75,37 @@ const TeacherSchedule: React.FC = () => {
   const [selectedTeacherId, setSelectedTeacherId] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
+  // Tarih güncellemesi için key oluştur
+  const dateKey = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+  
   // Öğretmenleri çek
   const { data: teachersData, isLoading: isLoadingTeachers } = useQuery<Teacher[]>({
     queryKey: ["/api/teachers"],
+    refetchInterval: 10 * 60 * 1000 // 10 dakikada bir yeniden kontrol et
   });
 
   // Ders saatleri çek
   const { data: periodsData } = useQuery<Period[]>({
-    queryKey: ["/api/periods"]
+    queryKey: ["/api/periods"],
+    refetchInterval: 5 * 60 * 1000 // 5 dakikada bir yeniden kontrol et
   });
 
   // Mevcut ders saati hesaplama
   const currentPeriod = useMemo(() => {
     if (!periodsData || !Array.isArray(periodsData)) return null;
     
-    // Test için 8. dersi manuel olarak ayarla (gerçek saatte çalışacak şekilde kaldırılabilir)
-    // Normalde bu şekilde hesaplanır:
-    // const currentTime = formattedTime;
-    // return periodsData.find((period) => currentTime >= period.startTime && currentTime <= period.endTime);
+    // Gerçek saate göre hesaplama
+    const currentTime = formattedTime;
+    return periodsData.find((period) => currentTime >= period.startTime && currentTime <= period.endTime);
     
-    // Test için 8. dersi manuel olarak ayarla
-    return periodsData.find(p => p.order === 8);
-  }, [periodsData]);
+    // Test için belirli bir ders saatini manuel göstermek isterseniz açabilirsiniz:
+    // return periodsData.find(p => p.order === 8);
+  }, [periodsData, formattedTime]);
 
   // Program verilerini çek
   const { data: schedulesData, isLoading: isLoadingSchedules } = useQuery<Schedule[]>({
-    queryKey: ["/api/enhanced/schedules"]
+    queryKey: ["/api/enhanced/schedules", dateKey],
+    refetchInterval: 5 * 60 * 1000 // 5 dakikada bir yeniden kontrol et, tarih değiştiğinde refetch yapar
   });
 
   // Öğretmen filtresi
@@ -295,13 +300,18 @@ interface AvailableTeachersProps {
 }
 
 const FreeTeachers: React.FC<AvailableTeachersProps> = ({ currentPeriod, dayOfWeek }) => {
+  // Tarih güncellemesi için key oluştur
+  const dateKey = `${new Date().getFullYear()}-${new Date().getMonth() + 1}-${new Date().getDate()}`;
+  
   // Tüm öğretmenleri ve ders programını çek
   const { data: teachers } = useQuery<any[]>({
-    queryKey: ["/api/teachers"]
+    queryKey: ["/api/teachers"],
+    refetchInterval: 10 * 60 * 1000 // 10 dakikada bir yeniden kontrol et
   });
   
   const { data: schedules } = useQuery<any[]>({
-    queryKey: ["/api/enhanced/schedules"]
+    queryKey: ["/api/enhanced/schedules", dateKey],
+    refetchInterval: 5 * 60 * 1000 // 5 dakikada bir yeniden kontrol et, tarih değiştiğinde refetch yapar
   });
   
   // Mevcut ders saatinde programı boş olan öğretmenleri bul

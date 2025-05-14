@@ -28,15 +28,21 @@ interface DutyTeacher {
 }
 
 const DutyTeachers: React.FC = () => {
-  const { formattedDate, turkishDayOfWeek, dayOfWeek } = useTurkishDate();
+  const { formattedDate, turkishDayOfWeek, dayOfWeek, date } = useTurkishDate({ 
+    updateInterval: 60000 // Her 1 dakikada bir güncelle
+  });
+  
+  // Her gün gece yarısında güncellenmesi için refetch yapılacak bir key oluşturalım
+  const dateKey = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
   
   const { data, isLoading, error } = useQuery<DutyTeacher[]>({
-    queryKey: ["/api/enhanced/duties"],
+    queryKey: ["/api/enhanced/duties", dateKey], // Gün değiştiğinde otomatik refetch yapar
     select: (data) => {
       if (!Array.isArray(data)) return [];
       return data
         .filter((duty: DutyTeacher) => duty.dayOfWeek === dayOfWeek);
-    }
+    },
+    refetchInterval: 5 * 60 * 1000 // 5 dakikada bir yeniden veri çek
   });
 
   if (isLoading) {

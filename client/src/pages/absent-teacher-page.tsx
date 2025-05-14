@@ -58,7 +58,19 @@ type AbsenceFormValues = z.infer<typeof absenceFormSchema>;
 
 const AbsentTeacherPage: React.FC = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [hasError, setHasError] = useState(false);
   const { toast } = useToast();
+  
+  // Error boundary
+  React.useEffect(() => {
+    const handleError = (error: ErrorEvent) => {
+      console.error("Sayfa hatası yakalandı:", error);
+      setHasError(true);
+    };
+    
+    window.addEventListener('error', handleError);
+    return () => window.removeEventListener('error', handleError);
+  }, []);
   
   // Fetch all absences
   const { data: absences, isLoading: absencesLoading } = useQuery({
@@ -70,22 +82,38 @@ const AbsentTeacherPage: React.FC = () => {
     queryKey: ['/api/teachers']
   });
   
-  // Get today's absences
+  // Get today's absences safely
   const todayAbsences = React.useMemo(() => {
-    if (!absences) return [];
+    // Veri kontrolü yapıyoruz
+    if (!absences || !Array.isArray(absences)) return [];
     
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    return absences.filter(absence => {
-      const startDate = new Date(absence.startDate);
-      startDate.setHours(0, 0, 0, 0);
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
       
-      const endDate = new Date(absence.endDate);
-      endDate.setHours(23, 59, 59, 999);
-      
-      return today >= startDate && today <= endDate;
-    });
+      return absences.filter((absence: any) => {
+        // Eksik veriler için kontrol
+        if (!absence || !absence.startDate || !absence.endDate) {
+          return false;
+        }
+        
+        try {
+          const startDate = new Date(absence.startDate);
+          startDate.setHours(0, 0, 0, 0);
+          
+          const endDate = new Date(absence.endDate);
+          endDate.setHours(23, 59, 59, 999);
+          
+          return today >= startDate && today <= endDate;
+        } catch (err) {
+          console.error("Tarih işleme hatası:", err);
+          return false;
+        }
+      });
+    } catch (err) {
+      console.error("Yoklama işleme hatası:", err);
+      return [];
+    }
   }, [absences]);
   
   // Form for adding new absence
@@ -142,6 +170,24 @@ const AbsentTeacherPage: React.FC = () => {
     addAbsenceMutation.mutate(values);
   };
   
+  if (hasError) {
+    return (
+      <DashboardLayout title="Gelmeyen Öğretmenler">
+        <div className="flex flex-col justify-center items-center h-64">
+          <div className="text-error mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-semibold">Bir sorun oluştu</h2>
+          <p className="text-muted-foreground mt-2">Sayfa yüklenirken bir hata oluştu. Lütfen tekrar deneyin.</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
+  
   if (absencesLoading || teachersLoading) {
     return (
       <DashboardLayout title="Gelmeyen Öğretmenler">
@@ -193,11 +239,13 @@ const AbsentTeacherPage: React.FC = () => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {teachers?.map((teacher) => (
+                          {Array.isArray(teachers) ? teachers.map((teacher: any) => (
                             <SelectItem key={teacher.id} value={teacher.id.toString()}>
                               {teacher.name} {teacher.surname} ({teacher.branch})
                             </SelectItem>
-                          ))}
+                          )) : (
+                            <SelectItem value="error">Öğretmen verileri yüklenemedi</SelectItem>
+                          )}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -302,30 +350,37 @@ const AbsentTeacherPage: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {todayAbsences.length > 0 ? (
-              todayAbsences.map((absence) => (
-                <div 
-                  key={absence.id} 
-                  className="p-4 border rounded-md bg-error/5 border-error/20"
-                >
-                  <div className="flex items-center mb-2">
-                    <div className="w-10 h-10 rounded-full bg-error/10 text-error flex items-center justify-center mr-3">
-                      <UserX className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <h3 className="font-medium text-lg">{absence.teacher.fullName}</h3>
-                      <p className="text-sm text-muted-foreground">{absence.teacher.branch}</p>
-                    </div>
-                    
-                    <div className="ml-auto text-sm">
-                      <p className="text-muted-foreground">Gelmeme Nedeni: {absence.reason || "Belirtilmemiş"}</p>
-                      <p className="text-muted-foreground">
-                        {format(new Date(absence.startDate), "dd MMMM yyyy", { locale: tr })}
-                      </p>
+            {Array.isArray(todayAbsences) && todayAbsences.length > 0 ? (
+              todayAbsences.map((absence: any) => {
+                // Kontrol ediyoruz
+                if (!absence || !absence.id || !absence.teacher) {
+                  return null;
+                }
+                
+                return (
+                  <div 
+                    key={absence.id} 
+                    className="p-4 border rounded-md bg-error/5 border-error/20"
+                  >
+                    <div className="flex items-center mb-2">
+                      <div className="w-10 h-10 rounded-full bg-error/10 text-error flex items-center justify-center mr-3">
+                        <UserX className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-lg">{absence.teacher.fullName || `${absence.teacher.name || ''} ${absence.teacher.surname || ''}`}</h3>
+                        <p className="text-sm text-muted-foreground">{absence.teacher.branch || ''}</p>
+                      </div>
+                      
+                      <div className="ml-auto text-sm">
+                        <p className="text-muted-foreground">Gelmeme Nedeni: {absence.reason || "Belirtilmemiş"}</p>
+                        <p className="text-muted-foreground">
+                          {absence.startDate ? format(new Date(absence.startDate), "dd MMMM yyyy", { locale: tr }) : "Tarih belirtilmemiş"}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             ) : (
               <div className="text-center py-8 text-muted-foreground">
                 <UserX className="h-10 w-10 mx-auto mb-2 opacity-50" />

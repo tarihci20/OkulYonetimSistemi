@@ -202,7 +202,7 @@ const ActiveClasses: React.FC = () => {
             <span>Bu Ders Saatinde Boş Olan Öğretmenler</span>
           </h4>
           
-          <AvailableTeachersSection currentPeriod={currentPeriod} dayOfWeek={dayOfWeek} />
+          <AvailableTeachers currentPeriod={currentPeriod} dayOfWeek={dayOfWeek} />
         </div>
       }
 
@@ -226,7 +226,7 @@ interface AvailableTeachersProps {
   dayOfWeek: number;
 }
 
-const AvailableTeachersSection: React.FC<AvailableTeachersProps> = ({ currentPeriod, dayOfWeek }) => {
+const AvailableTeachers: React.FC<AvailableTeachersProps> = ({ currentPeriod, dayOfWeek }) => {
   // Tüm öğretmenleri ve ders programını çek
   const { data: teachers } = useQuery<any[]>({
     queryKey: ["/api/teachers"]

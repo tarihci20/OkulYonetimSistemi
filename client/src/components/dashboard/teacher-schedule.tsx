@@ -287,7 +287,7 @@ interface AvailableTeachersProps {
   dayOfWeek: number;
 }
 
-const AvailableTeachers: React.FC<AvailableTeachersProps> = ({ currentPeriod, dayOfWeek }) => {
+const FreeTeachers: React.FC<AvailableTeachersProps> = ({ currentPeriod, dayOfWeek }) => {
   // Tüm öğretmenleri ve ders programını çek
   const { data: teachers } = useQuery<any[]>({
     queryKey: ["/api/teachers"]

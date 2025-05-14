@@ -169,7 +169,7 @@ const ScheduleManagement: React.FC = () => {
       classId: "",
       teacherId: "",
       subjectId: "",
-      periodId: "",
+      periodIds: [],
       dayOfWeek: "1",
     },
   });
@@ -181,7 +181,7 @@ const ScheduleManagement: React.FC = () => {
         classId: "",
         teacherId: "",
         subjectId: "",
-        periodId: "",
+        periodIds: [],
         dayOfWeek: "1",
       });
     }
@@ -190,19 +190,27 @@ const ScheduleManagement: React.FC = () => {
   // Create schedule mutation
   const createScheduleMutation = useMutation({
     mutationFn: async (values: ScheduleFormValues) => {
-      const transformedValues = {
-        classId: parseInt(values.classId, 10),
-        teacherId: parseInt(values.teacherId, 10),
-        subjectId: parseInt(values.subjectId, 10),
-        periodId: parseInt(values.periodId, 10),
-        dayOfWeek: parseInt(values.dayOfWeek, 10),
-      };
-      return await apiRequest("POST", "/api/schedules", transformedValues);
+      const { periodIds, ...restValues } = values;
+      
+      // Birden fazla ders için toplu işlem
+      const createPromises = periodIds.map(async (periodId) => {
+        const transformedValues = {
+          classId: parseInt(restValues.classId, 10),
+          teacherId: parseInt(restValues.teacherId, 10),
+          subjectId: parseInt(restValues.subjectId, 10),
+          periodId: parseInt(periodId, 10),
+          dayOfWeek: parseInt(restValues.dayOfWeek, 10),
+        };
+        return await apiRequest("POST", "/api/schedules", transformedValues);
+      });
+      
+      return await Promise.all(createPromises);
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
+      const periodCount = variables.periodIds.length;
       toast({
         title: "Ders programı eklendi",
-        description: "Ders programı başarıyla kaydedildi.",
+        description: `${periodCount} ders programı başarıyla kaydedildi.`,
       });
       queryClient.invalidateQueries({ queryKey: ['/api/enhanced/schedules'] });
       setIsDialogOpen(false);
@@ -788,27 +796,36 @@ const ScheduleManagement: React.FC = () => {
                     
                     <FormField
                       control={form.control}
-                      name="periodId"
+                      name="periodIds"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Ders Saati</FormLabel>
-                          <Select 
-                            onValueChange={field.onChange} 
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Ders saati seçin" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {periods?.map((p) => (
-                                <SelectItem key={p.id} value={p.id.toString()}>
+                          <FormLabel>Ders Saatleri (Birden fazla seçebilirsiniz)</FormLabel>
+                          <div className="border rounded-md p-4 space-y-2">
+                            {periods?.map((p) => (
+                              <div key={p.id} className="flex items-center space-x-2">
+                                <input
+                                  type="checkbox"
+                                  id={`period-${p.id}`}
+                                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                  value={p.id.toString()}
+                                  checked={field.value?.includes(p.id.toString())}
+                                  onChange={(e) => {
+                                    const value = p.id.toString();
+                                    if (e.target.checked) {
+                                      field.onChange([...field.value || [], value]);
+                                    } else {
+                                      field.onChange(
+                                        field.value?.filter((item) => item !== value) || []
+                                      );
+                                    }
+                                  }}
+                                />
+                                <label htmlFor={`period-${p.id}`} className="text-sm">
                                   {p.order}. Ders ({p.startTime}-{p.endTime})
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                                </label>
+                              </div>
+                            ))}
+                          </div>
                           <FormMessage />
                         </FormItem>
                       )}

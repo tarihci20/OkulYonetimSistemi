@@ -174,7 +174,7 @@ export default function DashboardLayout({ children, title }: DashboardLayoutProp
     <>
       <div className="p-4 border-b border-neutral-200">
         <div className="flex items-center">
-          <img src="/images/vildan-logo.svg" alt="Vildan Koleji Logo" className="h-8 w-8 mr-2" />
+          <img src="/images/vildan-logo.png" alt="Vildan Koleji Logo" className="h-10 w-auto mr-2" />
           <div>
             <h1 className="text-xl font-bold text-primary">Vildan İdare</h1>
             <p className="text-sm text-neutral-400">Okul Yönetim Sistemi</p>

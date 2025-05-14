@@ -128,6 +128,34 @@ const DutyTeachers: React.FC = () => {
       </tr>
     ));
   };
+  
+  // Özel sıralamaya göre nöbet yerlerini sıralayacak fonksiyon
+  const getSortedLocations = () => {
+    if (!dutyLocationsData) return [];
+    
+    // Özel sıralama: Bahçe, 1. Kat, 2. Kat, Kantin sırasına göre
+    const desiredOrder = ["BAHÇE", "1. KAT", "2. KAT", "KANTİN"];
+    
+    // Önce özel sıralamaya göre sırala
+    const sortedLocations = [...dutyLocationsData].sort((a, b) => {
+      const aIndex = desiredOrder.findIndex(name => a.name.toUpperCase() === name);
+      const bIndex = desiredOrder.findIndex(name => b.name.toUpperCase() === name);
+      
+      // Eğer iki konum da özel sıralamada ise, indekslerine göre sırala
+      if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+      
+      // Eğer sadece a özel sıralamada ise a önce gelsin
+      if (aIndex !== -1) return -1;
+      
+      // Eğer sadece b özel sıralamada ise b önce gelsin
+      if (bIndex !== -1) return 1;
+      
+      // İkisi de özel sıralamada değilse alfabetik sırala
+      return a.name.localeCompare(b.name);
+    });
+    
+    return sortedLocations;
+  };
 
   return (
     <div className="col-span-1 bg-white rounded-lg shadow-sm p-4">
@@ -148,7 +176,7 @@ const DutyTeachers: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {dutyLocationsData && dutyLocationsData.map(renderLocation)}
+              {getSortedLocations().map(renderLocation)}
             </tbody>
           </table>
         ) : (

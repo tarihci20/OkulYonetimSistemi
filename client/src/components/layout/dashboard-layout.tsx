@@ -50,6 +50,41 @@ export default function DashboardLayout({ children, title }: DashboardLayoutProp
   const [location] = useLocation();
   const { formattedDate, formattedTime } = useTurkishDate({ updateInterval: 30000 });
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  
+  // Menü öğeleri için renk fonksiyonları
+  const getMenuItemStyle = (href: string) => {
+    const isActive = location === href;
+    
+    // Her menü öğesi için farklı renk
+    if (isActive) {
+      if (href === "/") return "bg-blue-100 text-blue-700";
+      if (href === "/schedule" || href === "/schedule-management") return "bg-green-100 text-green-700";
+      if (href === "/periods") return "bg-purple-100 text-purple-700";
+      if (href === "/duty") return "bg-amber-100 text-amber-700";
+      if (href === "/absent") return "bg-red-100 text-red-700";
+      if (href === "/extra-lesson") return "bg-indigo-100 text-indigo-700";
+      if (href.includes("/admin")) return "bg-teal-100 text-teal-700";
+      
+      // Varsayılan aktif stil
+      return "bg-primary/10 text-primary";
+    }
+    
+    // Aktif olmayan stil
+    return "hover:bg-neutral-100 text-neutral-500";
+  };
+  
+  // İkon renkleri
+  const getIconColor = (href: string) => {
+    if (href === "/") return "text-blue-500";
+    if (href === "/schedule" || href === "/schedule-management") return "text-green-500";
+    if (href === "/periods") return "text-purple-500";
+    if (href === "/duty") return "text-amber-500";
+    if (href === "/absent") return "text-red-500";
+    if (href === "/extra-lesson") return "text-indigo-500";
+    if (href.includes("/admin")) return "text-teal-500";
+    
+    return "";
+  };
 
   const handleLogout = () => {
     logoutMutation.mutate();
@@ -155,16 +190,14 @@ export default function DashboardLayout({ children, title }: DashboardLayoutProp
                   variant="ghost"
                   className={cn(
                     "flex w-full justify-start items-center px-3 py-2 rounded-md text-sm font-medium mb-1 transition-colors",
-                    item.isActive
-                      ? "bg-primary bg-opacity-10 text-primary"
-                      : "hover:bg-neutral-100 text-neutral-500"
+                    getMenuItemStyle(item.href)
                   )}
                   onClick={() => {
                     setIsMobileSidebarOpen(false);
                     window.location.href = item.href;
                   }}
                 >
-                  <span className="mr-3">{item.icon}</span>
+                  <span className={cn("mr-3", getIconColor(item.href))}>{item.icon}</span>
                   <span>{item.title}</span>
                 </Button>
               </div>

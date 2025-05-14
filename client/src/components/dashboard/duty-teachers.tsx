@@ -35,8 +35,7 @@ const DutyTeachers: React.FC = () => {
     select: (data) => {
       if (!Array.isArray(data)) return [];
       return data
-        .filter((duty: DutyTeacher) => duty.dayOfWeek === dayOfWeek)
-        .slice(0, 5);
+        .filter((duty: DutyTeacher) => duty.dayOfWeek === dayOfWeek);
     }
   });
 

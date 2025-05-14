@@ -107,14 +107,21 @@ const TeacherSchedule: React.FC = () => {
   const filteredTeachers = useMemo(() => {
     if (!teachersData || !Array.isArray(teachersData)) return [];
     
-    return teachersData.filter((teacher) => {
-      // Öğretmenin tam adını oluştur (fullName özelliği yoksa)
-      const fullName = teacher.fullName || `${teacher.name} ${teacher.surname}`;
-      return (
-        fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        teacher.branch.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    });
+    return teachersData
+      .filter((teacher) => {
+        // Öğretmenin tam adını oluştur (fullName özelliği yoksa)
+        const fullName = teacher.fullName || `${teacher.name} ${teacher.surname}`;
+        return (
+          fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          teacher.branch.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      })
+      // Alfabetik sıralama
+      .sort((a, b) => {
+        const nameA = `${a.name} ${a.surname}`;
+        const nameB = `${b.name} ${b.surname}`;
+        return nameA.localeCompare(nameB, 'tr');
+      });
   }, [teachersData, searchTerm]);
 
   // Seçilen öğretmenin programı

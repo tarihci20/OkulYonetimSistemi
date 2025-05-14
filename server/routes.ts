@@ -25,6 +25,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication
   setupAuth(app);
   
+  // User routes
+  app.get("/api/users", isAdmin, async (req, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      // Map users to remove password before sending response
+      const safeUsers = users.map(user => {
+        const { password, ...safeUser } = user;
+        return safeUser;
+      });
+      res.json(safeUsers);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Kullanıcılar alınırken hata oluştu" });
+    }
+  });
+  
   // Teacher routes
   app.get("/api/teachers", isAuthenticated, async (req, res) => {
     try {

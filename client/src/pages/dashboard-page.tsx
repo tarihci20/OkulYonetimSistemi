@@ -130,7 +130,7 @@ const DashboardPage: React.FC = () => {
           </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <StatusCard
             icon={<School className="h-5 w-5" />}
             title="Aktif Dersler"
@@ -146,27 +146,22 @@ const DashboardPage: React.FC = () => {
             description={stats.dutyTeachers > 0 ? "Aktif nöbet alanları" : "Nöbetçi yok"}
             color="warning"
           />
-          
-          <StatusCard
-            icon={<UserX className="h-5 w-5" />}
-            title="Yoklama Durumu"
-            value={stats.absentTeachers}
-            description={`${stats.absentTeachers} Öğretmen İzinli, ${stats.missingLessons} Ders Boşta`}
-            color="error"
-          />
         </div>
       </div>
       
-      {/* Ana İçerik Bölümü - Sınıflar, Öğretmenler ve Nöbetçiler */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        {/* 1. Sınıflardaki Dersler */}
+      {/* Ana İçerik Bölümü - Tüm Sınıflar */}
+      <div className="mb-6">
+        {/* 1. Sınıflardaki Dersler (Tablo) */}
         <ActiveClasses />
-        
-        {/* 2. Öğretmen Dersleri */}
-        <TeacherSchedule />
-        
-        {/* 3. Bugünkü Nöbetçiler */}
+      </div>
+
+      {/* Alt Kısım - Nöbetçiler ve Öğretmen Programı */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        {/* 2. Bugünkü Nöbetçiler */}
         <DutyTeachers />
+        
+        {/* 3. Öğretmen Dersleri */}
+        <TeacherSchedule />
       </div>
     </DashboardLayout>
   );

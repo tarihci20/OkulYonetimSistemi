@@ -126,7 +126,7 @@ const ActiveClasses: React.FC = () => {
   }
 
   return (
-    <div className="col-span-1 bg-white rounded-lg shadow-sm p-4">
+    <div className="col-span-3 bg-white rounded-lg shadow-sm p-4">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-medium">Sınıflardaki Dersler</h3>
         <div className="text-xs bg-primary text-white px-2 py-1 rounded-full">
@@ -134,27 +134,30 @@ const ActiveClasses: React.FC = () => {
         </div>
       </div>
       
-      <div className="overflow-y-auto max-h-[400px]">
+      <div className="overflow-x-auto">
         {currentPeriod ? (
           Array.isArray(classSchedules) && classSchedules.length > 0 ? (
-            <div className="grid gap-2">
-              {classSchedules.map((classItem) => (
-                <div 
-                  key={`${classItem.className}-${classItem.periodId}`} 
-                  className={`flex items-center p-3 rounded-lg ${classItem.empty ? 'bg-gray-50' : 'bg-primary/5 border border-primary/20'}`}
-                >
-                  <div className="w-14 h-14 rounded-md bg-primary bg-opacity-10 text-primary flex items-center justify-center font-bold">
-                    {classItem.className}
-                  </div>
-                  <div className="ml-3 flex-1">
-                    <div className={`font-medium ${classItem.empty ? 'text-gray-400' : ''}`}>{classItem.subject}</div>
-                    {!classItem.empty && (
-                      <div className="text-sm text-neutral-500">{classItem.teacher}</div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="border px-4 py-2 text-left">Sınıf</th>
+                  <th className="border px-4 py-2 text-left">Ders</th>
+                  <th className="border px-4 py-2 text-left">Öğretmen</th>
+                </tr>
+              </thead>
+              <tbody>
+                {classSchedules.map((classItem) => (
+                  <tr 
+                    key={`${classItem.className}-${classItem.periodId}`} 
+                    className={classItem.empty ? 'bg-gray-50' : 'hover:bg-primary/5'}
+                  >
+                    <td className="border px-4 py-2 font-medium">{classItem.className}</td>
+                    <td className="border px-4 py-2">{classItem.subject}</td>
+                    <td className="border px-4 py-2">{classItem.teacher}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           ) : (
             <div className="flex flex-col items-center justify-center py-8 text-neutral-400">
               <School className="h-8 w-8 mb-2" />

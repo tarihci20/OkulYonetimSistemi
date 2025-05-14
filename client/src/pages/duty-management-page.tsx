@@ -121,7 +121,7 @@ const DutyManagementPage: React.FC = () => {
     teacherId: '',
     locationId: '',
     dayOfWeek: '',
-    dutyType: 'full_day', // Varsayılan olarak "tüm gün nöbet"
+    dutyType: 'full_day' as 'full_day' | 'break_time', // Varsayılan olarak "tüm gün nöbet"
     notes: '',
   });
   
@@ -387,6 +387,7 @@ const DutyManagementPage: React.FC = () => {
       teacherId: parseInt(dutyFormData.teacherId),
       locationId: parseInt(dutyFormData.locationId),
       dayOfWeek: parseInt(dutyFormData.dayOfWeek),
+      dutyType: dutyFormData.dutyType as 'full_day' | 'break_time',
       notes: dutyFormData.notes || undefined,
       ...(isEditingDuty && currentDuty ? { id: currentDuty.id } : {})
     });
@@ -411,6 +412,7 @@ const DutyManagementPage: React.FC = () => {
       teacherId: '',
       locationId: '',
       dayOfWeek: '',
+      dutyType: 'full_day',
       notes: '',
     });
   };
@@ -767,6 +769,23 @@ const DutyManagementPage: React.FC = () => {
                     <SelectItem value="5">Cuma</SelectItem>
                     <SelectItem value="6">Cumartesi</SelectItem>
                     <SelectItem value="7">Pazar</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="dutyType">Nöbet Türü</Label>
+                <Select 
+                  value={dutyFormData.dutyType} 
+                  onValueChange={(value) => handleDutyChange('dutyType', value)}
+                  required
+                >
+                  <SelectTrigger id="dutyType">
+                    <SelectValue placeholder="Nöbet türünü seçin" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="full_day">Tüm Gün Nöbet</SelectItem>
+                    <SelectItem value="break_time">Ara Nöbet</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

@@ -36,8 +36,27 @@ export function useTurkishDate(options: TurkishDateOptions = {}) {
     const updateDate = () => {
       // Türkiye'nin GMT+3 saat dilimini oluşturuyoruz
       const now = new Date();
-      // UTC zamanı al ve üzerine Türkiye için 3 saat ekle
-      const turkeyDate = new Date(now.getTime() + (3 * 60 * 60 * 1000 - now.getTimezoneOffset() * 60 * 1000));
+      
+      // UTC zamanını alıyoruz
+      const utcHours = now.getUTCHours();
+      const utcMinutes = now.getUTCMinutes();
+      const utcSeconds = now.getUTCSeconds();
+      const utcMilliseconds = now.getUTCMilliseconds();
+      const utcDate = now.getUTCDate();
+      const utcMonth = now.getUTCMonth();
+      const utcYear = now.getUTCFullYear();
+      
+      // Türkiye saati için UTC+3 olarak ayarlıyoruz
+      const turkeyDate = new Date(Date.UTC(
+        utcYear, 
+        utcMonth, 
+        utcDate, 
+        utcHours + 3, // GMT+3 için 3 saat ekliyoruz
+        utcMinutes,
+        utcSeconds,
+        utcMilliseconds
+      ));
+      
       setDate(turkeyDate);
     };
     

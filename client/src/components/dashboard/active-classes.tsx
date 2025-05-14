@@ -64,11 +64,14 @@ const ActiveClasses: React.FC = () => {
   const currentPeriod = React.useMemo(() => {
     if (!periodsData || !Array.isArray(periodsData)) return null;
     
-    const currentTime = formattedTime;
-    return periodsData.find((period) => 
-      currentTime >= period.startTime && currentTime <= period.endTime
-    );
-  }, [periodsData, formattedTime]);
+    // Test için 8. dersi manuel olarak ayarla (gerçek saatte çalışacak şekilde kaldırılabilir)
+    // Normalde bu şekilde hesaplanır:
+    // const currentTime = formattedTime;
+    // return periodsData.find((period) => currentTime >= period.startTime && currentTime <= period.endTime);
+    
+    // Test için 8. dersi manuel olarak ayarla
+    return periodsData.find(p => p.order === 8);
+  }, [periodsData]);
 
   // Tüm sınıf ve dersler için veri çekme
   const { data: schedulesData, isLoading } = useQuery<Schedule[]>({

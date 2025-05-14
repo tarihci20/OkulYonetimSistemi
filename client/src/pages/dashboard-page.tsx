@@ -53,12 +53,15 @@ const DashboardPage: React.FC = () => {
   // Mevcut zaman bilgisi ve ders dönemi hesaplama
   const currentPeriod = React.useMemo(() => {
     if (!periodsData || !Array.isArray(periodsData)) return null;
-    const currentTime = formattedTime;
     
-    return periodsData.find((period) => 
-      currentTime >= period.startTime && currentTime <= period.endTime
-    );
-  }, [periodsData, formattedTime]);
+    // Test için 8. dersi manuel olarak ayarla (gerçek saatte çalışacak şekilde kaldırılabilir)
+    // Normalde bu şekilde hesaplanır:
+    // const currentTime = formattedTime;
+    // return periodsData.find((period) => currentTime >= period.startTime && currentTime <= period.endTime);
+    
+    // Test için 8. dersi manuel olarak ayarla
+    return periodsData.find(p => p.order === 8);
+  }, [periodsData]);
 
   // Dashboard verilerini çek
   const { data: currentDayData, isLoading } = useQuery<DashboardData>({
@@ -113,39 +116,16 @@ const DashboardPage: React.FC = () => {
 
   return (
     <DashboardLayout title="Kontrol Paneli">
-      {/* Üst Durum Kartları */}
-      <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-medium">
-            Günlük Durum Özeti
-          </h3>
-          <div className="flex items-center text-neutral-500 text-sm">
-            <Clock className="mr-1.5 h-4 w-4" />
-            <span>{formattedDate} {formattedTime}</span>
-            {currentPeriod && (
-              <span className="ml-2 px-2 py-0.5 bg-primary/10 text-primary rounded-full text-xs">
-                {currentPeriod.order}. Ders
-              </span>
-            )}
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <StatusCard
-            icon={<School className="h-5 w-5" />}
-            title="Aktif Dersler"
-            value={stats.activeClasses}
-            description={`${stats.activeClasses} Sınıf, ${stats.activeClasses} Öğretmen`}
-            color="primary"
-          />
-          
-          <StatusCard
-            icon={<ClipboardList className="h-5 w-5" />}
-            title="Nöbetçi Öğretmenler"
-            value={stats.dutyTeachers}
-            description={stats.dutyTeachers > 0 ? "Aktif nöbet alanları" : "Nöbetçi yok"}
-            color="warning"
-          />
+      {/* Tarih ve Saat Bilgisi */}
+      <div className="flex justify-end items-center mb-4">
+        <div className="flex items-center text-neutral-500 text-sm">
+          <Clock className="mr-1.5 h-4 w-4" />
+          <span>{formattedDate} {formattedTime}</span>
+          {currentPeriod && (
+            <span className="ml-2 px-2 py-0.5 bg-primary/10 text-primary rounded-full text-xs">
+              {currentPeriod.order}. Ders
+            </span>
+          )}
         </div>
       </div>
       

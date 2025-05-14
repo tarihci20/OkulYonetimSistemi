@@ -89,11 +89,14 @@ const TeacherSchedule: React.FC = () => {
   const currentPeriod = useMemo(() => {
     if (!periodsData || !Array.isArray(periodsData)) return null;
     
-    const currentTime = formattedTime;
-    return periodsData.find((period) => 
-      currentTime >= period.startTime && currentTime <= period.endTime
-    );
-  }, [periodsData, formattedTime]);
+    // Test için 8. dersi manuel olarak ayarla (gerçek saatte çalışacak şekilde kaldırılabilir)
+    // Normalde bu şekilde hesaplanır:
+    // const currentTime = formattedTime;
+    // return periodsData.find((period) => currentTime >= period.startTime && currentTime <= period.endTime);
+    
+    // Test için 8. dersi manuel olarak ayarla
+    return periodsData.find(p => p.order === 8);
+  }, [periodsData]);
 
   // Program verilerini çek
   const { data: schedulesData, isLoading: isLoadingSchedules } = useQuery<Schedule[]>({
@@ -116,15 +119,16 @@ const TeacherSchedule: React.FC = () => {
 
   // Seçilen öğretmenin programı
   const teacherSchedules = useMemo(() => {
-    if (!schedulesData || !Array.isArray(schedulesData) || !selectedTeacherId) return [];
+    if (!schedulesData || !Array.isArray(schedulesData) || !selectedTeacherId || !currentPeriod) return [];
 
-    // Bugünün programını filtrele
+    // Bugünün programını ve sadece mevcut ders saatini filtrele
     const todaySchedules = schedulesData.filter((schedule) => 
       schedule.teacherId === selectedTeacherId && 
-      schedule.dayOfWeek === dayOfWeek
+      schedule.dayOfWeek === dayOfWeek &&
+      schedule.periodId === currentPeriod.id
     );
     
-    // Ders saatleri sırasına göre düzenle
+    // Ders saati bilgilerini hazırla
     return todaySchedules
       .map((schedule) => ({
         id: schedule.id,
@@ -133,9 +137,8 @@ const TeacherSchedule: React.FC = () => {
         periodTime: `${schedule.period.startTime} - ${schedule.period.endTime}`,
         className: schedule.class.name,
         subject: schedule.subject.name,
-      }))
-      .sort((a, b) => a.periodOrder - b.periodOrder);
-  }, [schedulesData, selectedTeacherId, dayOfWeek]);
+      }));
+  }, [schedulesData, selectedTeacherId, dayOfWeek, currentPeriod]);
 
   // Loading durumu
   if (isLoadingTeachers || isLoadingSchedules) {
@@ -194,15 +197,11 @@ const TeacherSchedule: React.FC = () => {
               {teacherSchedules.map((schedule) => (
                 <div 
                   key={schedule.id} 
-                  className={`p-3 rounded-lg border ${
-                    currentPeriod && currentPeriod.id === schedule.periodId
-                      ? 'bg-primary/10 border-primary/30 font-medium'
-                      : 'bg-white border-gray-200'
-                  }`}
+                  className="p-3 rounded-lg border bg-primary/10 border-primary/30 font-medium"
                 >
                   <div className="flex justify-between">
                     <div className="font-medium text-sm">
-                      {schedule.periodOrder}. Ders
+                      {schedule.periodOrder}. Ders <span className="text-primary">(Şu anda)</span>
                     </div>
                     <div className="text-xs text-gray-500">
                       {schedule.periodTime}
@@ -222,7 +221,11 @@ const TeacherSchedule: React.FC = () => {
           ) : (
             <div className="flex flex-col items-center justify-center py-8 text-neutral-400">
               <Calendar className="h-8 w-8 mb-2" />
-              <p>Bugün için ders programı bulunamadı</p>
+              {currentPeriod ? (
+                <p>Bu ders saatinde dersi bulunmuyor</p>
+              ) : (
+                <p>Şu anda ders saati değil</p>
+              )}
             </div>
           )
         ) : (

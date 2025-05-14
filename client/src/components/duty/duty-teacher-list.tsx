@@ -67,11 +67,13 @@ const DutyTeacherList: React.FC<DutyTeacherListProps> = ({ duties }) => {
                   <div className="text-xs text-muted-foreground">
                     {duty.period 
                       ? `${duty.period.order}. Ders (${duty.period.startTime} - ${duty.period.endTime})` 
-                      : "Tüm Gün"}
+                      : duty.dutyType === 'break_time' 
+                        ? "Ara Nöbet" 
+                        : "Tüm Gün Nöbet"}
                   </div>
                 </div>
                 
-                <Badge variant={isTeacherOnDuty(duty) ? "success" : "outline"} className="ml-auto">
+                <Badge variant={isTeacherOnDuty(duty) ? "default" : "outline"} className="ml-auto">
                   {isTeacherOnDuty(duty) ? (
                     <div className="flex items-center">
                       <CheckCircle2 className="h-3 w-3 mr-1" />

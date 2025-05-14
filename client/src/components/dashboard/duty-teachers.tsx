@@ -18,6 +18,7 @@ interface DutyTeacher {
     name: string;
   };
   dayOfWeek: number;
+  dutyType?: 'full_day' | 'break_time';
   period?: {
     id: number;
     order: number;
@@ -85,7 +86,9 @@ const DutyTeachers: React.FC = () => {
               </div>
               <div className="ml-3 flex-1">
                 <div className="font-medium">{dutyTeacher.teacher.fullName}</div>
-                <div className="text-sm text-neutral-500">{dutyTeacher.location.name}</div>
+                <div className="text-sm text-neutral-500">
+                  {dutyTeacher.location.name} - {dutyTeacher.dutyType === 'break_time' ? 'Ara Nöbet' : 'Tüm Gün'}
+                </div>
               </div>
               <div className="ml-auto">
                 <span className={`text-xs ${isTeacherOnDuty(dutyTeacher) ? 'bg-success bg-opacity-10 text-success' : 'bg-neutral-100 text-neutral-600'} px-2 py-1 rounded-full`}>

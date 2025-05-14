@@ -190,6 +190,7 @@ const ScheduleManagement: React.FC = () => {
   // Create schedule mutation
   const createScheduleMutation = useMutation({
     mutationFn: async (values: ScheduleFormValues) => {
+      // Dizeleri sayılara dönüştür
       const transformedValues = {
         classId: parseInt(values.classId, 10),
         teacherId: parseInt(values.teacherId, 10),
@@ -236,7 +237,7 @@ const ScheduleManagement: React.FC = () => {
       });
     },
   });
-  
+
   // Excel işlemleri
   const handleExcelFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -356,8 +357,9 @@ const ScheduleManagement: React.FC = () => {
       
       if (periods) {
         periods.forEach(p => {
-          // Dönem order (sıra) özelliğini kullan
+          // Dönem kimliğini ve sırasını kullan (ör: "1" veya "1. Ders")
           periodMap.set(p.order.toString().toUpperCase(), p.id);
+          // Not: period nesnesinde adı veya açıklaması varsa ona göre düzenleme yapılabilir
         });
       }
       
@@ -420,6 +422,8 @@ const ScheduleManagement: React.FC = () => {
         }
         
         try {
+          // Mevcut çakışma kontrolü yapılabilir
+          
           // Dersi ekle
           await apiRequest("POST", "/api/schedules", {
             classId,
@@ -525,7 +529,6 @@ const ScheduleManagement: React.FC = () => {
         </h2>
         
         <div className="flex gap-2">
-          {/* Excel Yükleme Diyaloğu */}
           <Dialog open={isExcelDialogOpen} onOpenChange={setIsExcelDialogOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" className="flex items-center">
@@ -629,43 +632,127 @@ const ScheduleManagement: React.FC = () => {
             </DialogContent>
           </Dialog>
           
-          {/* Ders Ekleme Diyaloğu */}
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="flex items-center">
-                <Plus className="mr-2 h-4 w-4" />
-                Programa Ders Ekle
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Ders Programına Yeni Ders Ekle</DialogTitle>
-                <DialogDescription>
-                  Sınıf, öğretmen, ders ve zaman bilgilerini girin
-                </DialogDescription>
-              </DialogHeader>
-              
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <DialogTrigger asChild>
+            <Button className="flex items-center">
+              <Plus className="mr-2 h-4 w-4" />
+              Programa Ders Ekle
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Ders Programına Yeni Ders Ekle</DialogTitle>
+              <DialogDescription>
+                Sınıf, öğretmen, ders ve zaman bilgilerini girin
+              </DialogDescription>
+            </DialogHeader>
+            
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="classId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Sınıf</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Sınıf seçin" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {classes?.map((classItem) => (
+                            <SelectItem key={classItem.id} value={classItem.id.toString()}>
+                              {classItem.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="teacherId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Öğretmen</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Öğretmen seçin" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {teachers?.map((teacher) => (
+                            <SelectItem key={teacher.id} value={teacher.id.toString()}>
+                              {getTeacherFullName(teacher)} ({teacher.branch})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="subjectId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Ders</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Ders seçin" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {subjects?.map((subject) => (
+                            <SelectItem key={subject.id} value={subject.id.toString()}>
+                              {subject.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="classId"
+                    name="dayOfWeek"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Sınıf</FormLabel>
+                        <FormLabel>Gün</FormLabel>
                         <Select 
                           onValueChange={field.onChange} 
                           defaultValue={field.value}
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Sınıf seçin" />
+                              <SelectValue placeholder="Gün seçin" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {classes?.map((c) => (
-                              <SelectItem key={c.id} value={c.id.toString()}>
-                                {c.name}
+                            {DAYS_OF_WEEK.map((day) => (
+                              <SelectItem key={day.value} value={day.value}>
+                                {day.label}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -674,26 +761,26 @@ const ScheduleManagement: React.FC = () => {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
-                    name="teacherId"
+                    name="periodId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Öğretmen</FormLabel>
+                        <FormLabel>Ders Saati</FormLabel>
                         <Select 
                           onValueChange={field.onChange} 
                           defaultValue={field.value}
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Öğretmen seçin" />
+                              <SelectValue placeholder="Ders saati seçin" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {teachers?.map((t) => (
-                              <SelectItem key={t.id} value={t.id.toString()}>
-                                {t.name} {t.surname} ({t.branch})
+                            {periods?.map((period) => (
+                              <SelectItem key={period.id} value={period.id.toString()}>
+                                {period.order}. Ders ({period.startTime}-{period.endTime})
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -702,354 +789,263 @@ const ScheduleManagement: React.FC = () => {
                       </FormItem>
                     )}
                   />
-                  
-                  <FormField
-                    control={form.control}
-                    name="subjectId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Ders</FormLabel>
-                        <Select 
-                          onValueChange={field.onChange} 
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Ders seçin" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {subjects?.map((s) => (
-                              <SelectItem key={s.id} value={s.id.toString()}>
-                                {s.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="dayOfWeek"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Gün</FormLabel>
-                          <Select 
-                            onValueChange={field.onChange} 
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Gün seçin" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {DAYS_OF_WEEK.map((day) => (
-                                <SelectItem key={day.value} value={day.value}>
-                                  {day.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="periodId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Ders Saati</FormLabel>
-                          <Select 
-                            onValueChange={field.onChange} 
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Ders saati seçin" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {periods?.map((p) => (
-                                <SelectItem key={p.id} value={p.id.toString()}>
-                                  {p.order}. Ders ({p.startTime}-{p.endTime})
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </form>
-              </Form>
-              
-              <DialogFooter>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setIsDialogOpen(false)}
-                >
-                  İptal
-                </Button>
-                <Button 
-                  type="submit"
-                  onClick={form.handleSubmit(onSubmit)}
-                  disabled={createScheduleMutation.isPending}
-                >
-                  {createScheduleMutation.isPending ? (
-                    <>
-                      <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
-                      Kaydediliyor...
-                    </>
-                  ) : "Kaydet"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
+                </div>
+                
+                <DialogFooter className="mt-6">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setIsDialogOpen(false)}
+                  >
+                    İptal
+                  </Button>
+                  <Button 
+                    type="submit"
+                    disabled={createScheduleMutation.isPending}
+                  >
+                    {createScheduleMutation.isPending ? (
+                      <>
+                        <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+                        Kaydediliyor...
+                      </>
+                    ) : "Kaydet"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
       </div>
-      
-      <div className="border rounded-md p-4 bg-gray-50">
-        <div className="flex flex-wrap gap-4 mb-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Gün Seçin</label>
-            <Select value={selectedDayOfWeek} onValueChange={setSelectedDayOfWeek}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Gün Seçin" />
-              </SelectTrigger>
-              <SelectContent>
-                {DAYS_OF_WEEK.map((day) => (
-                  <SelectItem key={day.value} value={day.value}>
-                    {day.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
 
-          <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
-            <TabsList>
-              <TabsTrigger value="classes">Sınıflar</TabsTrigger>
-              <TabsTrigger value="teachers">Öğretmenler</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="classes" className="mt-4">
-              <label className="block text-sm font-medium mb-1">Sınıf Seçin</label>
-              <Select value={selectedClassId} onValueChange={setSelectedClassId}>
-                <SelectTrigger className="w-full md:w-[300px]">
-                  <SelectValue placeholder="Sınıf Seçin" />
-                </SelectTrigger>
-                <SelectContent>
-                  {classes?.map((c) => (
-                    <SelectItem key={c.id} value={c.id.toString()}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </TabsContent>
-
-            <TabsContent value="teachers" className="mt-4">
-              <label className="block text-sm font-medium mb-1">Öğretmen Seçin</label>
-              <Select value={selectedTeacherId} onValueChange={setSelectedTeacherId}>
-                <SelectTrigger className="w-full md:w-[300px]">
-                  <SelectValue placeholder="Öğretmen Seçin" />
-                </SelectTrigger>
-                <SelectContent>
-                  {teachers?.map((t) => (
-                    <SelectItem key={t.id} value={t.id.toString()}>
-                      {t.name} {t.surname} ({t.branch})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </TabsContent>
-          </Tabs>
-        </div>
-      </div>
-      
       <Card>
         <CardHeader>
-          <CardTitle>Ders Programı</CardTitle>
+          <CardTitle>Ders Programı Görüntüle</CardTitle>
           <CardDescription>
-            {selectedTab === "classes" && selectedClassId
-              ? `${classes?.find(c => c.id.toString() === selectedClassId)?.name} Sınıfı - ${getDayName(parseInt(selectedDayOfWeek, 10))} Programı`
-              : selectedTab === "teachers" && selectedTeacherId
-              ? `${teachers?.find(t => t.id.toString() === selectedTeacherId)?.name} ${teachers?.find(t => t.id.toString() === selectedTeacherId)?.surname} - ${getDayName(parseInt(selectedDayOfWeek, 10))} Programı`
-              : "Sınıf veya öğretmen seçin"}
+            Sınıflara veya öğretmenlere göre ders programlarını görüntüleyin
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {selectedTab === "classes" && selectedClassId ? (
-            sortedSchedules.length > 0 ? (
-              <div className="border rounded-lg overflow-hidden">
-                <table className="w-full">
-                  <thead className="bg-gray-50 border-b">
-                    <tr>
-                      <th className="px-4 py-2 text-left text-sm font-medium">Saat</th>
-                      <th className="px-4 py-2 text-left text-sm font-medium">Ders</th>
-                      <th className="px-4 py-2 text-left text-sm font-medium">Öğretmen</th>
-                      <th className="px-4 py-2 text-right text-sm font-medium">İşlemler</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sortedSchedules.map((schedule) => (
-                      <tr key={schedule.id} className="border-b">
-                        <td className="px-4 py-3 text-sm">
-                          {schedule.period.order}. Ders<br />
-                          <span className="text-xs text-gray-500">
-                            {schedule.period.startTime} - {schedule.period.endTime}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-sm font-medium">
-                          {schedule.subject.name}
-                        </td>
-                        <td className="px-4 py-3 text-sm">
-                          {getTeacherFullName(schedule.teacher)}
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <div className="flex gap-2 justify-end">
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => {
-                                // Düzenleme fonksiyonu (şimdilik boş)
-                                toast({
-                                  title: "Bilgi",
-                                  description: "Düzenleme özelliği yakında eklenecek"
-                                });
-                              }}
-                            >
-                              Düzenle
-                            </Button>
-                            <Button 
-                              variant="destructive" 
-                              size="sm"
-                              onClick={() => {
-                                if (window.confirm("Bu dersi programdan silmek istediğinize emin misiniz?")) {
-                                  deleteScheduleMutation.mutate(schedule.id);
-                                }
-                              }}
-                            >
-                              Sil
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
+          <Tabs defaultValue="classes" value={selectedTab} onValueChange={setSelectedTab}>
+            <TabsList className="grid w-full grid-cols-2 mb-4">
+              <TabsTrigger value="classes" className="flex items-center">
+                <School className="h-4 w-4 mr-2" />
+                Sınıflar
+              </TabsTrigger>
+              <TabsTrigger value="teachers" className="flex items-center">
+                <User className="h-4 w-4 mr-2" />
+                Öğretmenler
+              </TabsTrigger>
+            </TabsList>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div>
+                {selectedTab === "classes" ? (
+                  <Select value={selectedClassId} onValueChange={setSelectedClassId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sınıf seçin" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {classes?.map((classItem) => (
+                        <SelectItem key={classItem.id} value={classItem.id.toString()}>
+                          {classItem.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Select value={selectedTeacherId} onValueChange={setSelectedTeacherId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Öğretmen seçin" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {teachers?.map((teacher) => (
+                        <SelectItem key={teacher.id} value={teacher.id.toString()}>
+                          {getTeacherFullName(teacher)} ({teacher.branch})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+              
+              <div>
+                <Select value={selectedDayOfWeek} onValueChange={setSelectedDayOfWeek}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Gün seçin" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DAYS_OF_WEEK.map((day) => (
+                      <SelectItem key={day.value} value={day.value}>
+                        {day.label}
+                      </SelectItem>
                     ))}
-                  </tbody>
-                </table>
+                  </SelectContent>
+                </Select>
               </div>
-            ) : (
-              <div className="text-center py-8 bg-gray-50 rounded-lg border">
-                <School className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-sm font-medium text-gray-900">Ders programı bulunamadı</h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  Seçilen sınıf ve gün için ders programı henüz oluşturulmamış.
-                </p>
-                <div className="mt-6">
-                  <Button 
-                    onClick={() => setIsDialogOpen(true)}
-                    className="inline-flex items-center"
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Ders Ekle
-                  </Button>
-                </div>
-              </div>
-            )
-          ) : selectedTab === "teachers" && selectedTeacherId ? (
-            sortedSchedules.length > 0 ? (
-              <div className="border rounded-lg overflow-hidden">
-                <table className="w-full">
-                  <thead className="bg-gray-50 border-b">
-                    <tr>
-                      <th className="px-4 py-2 text-left text-sm font-medium">Saat</th>
-                      <th className="px-4 py-2 text-left text-sm font-medium">Sınıf</th>
-                      <th className="px-4 py-2 text-left text-sm font-medium">Ders</th>
-                      <th className="px-4 py-2 text-right text-sm font-medium">İşlemler</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sortedSchedules.map((schedule) => (
-                      <tr key={schedule.id} className="border-b">
-                        <td className="px-4 py-3 text-sm">
-                          {schedule.period.order}. Ders<br />
-                          <span className="text-xs text-gray-500">
-                            {schedule.period.startTime} - {schedule.period.endTime}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-sm">
-                          {schedule.class.name}
-                        </td>
-                        <td className="px-4 py-3 text-sm font-medium">
-                          {schedule.subject.name}
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <div className="flex gap-2 justify-end">
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => {
-                                toast({
-                                  title: "Bilgi",
-                                  description: "Düzenleme özelliği yakında eklenecek"
-                                });
-                              }}
-                            >
-                              Düzenle
-                            </Button>
-                            <Button 
-                              variant="destructive" 
-                              size="sm"
-                              onClick={() => {
-                                if (window.confirm("Bu dersi programdan silmek istediğinize emin misiniz?")) {
-                                  deleteScheduleMutation.mutate(schedule.id);
-                                }
-                              }}
-                            >
-                              Sil
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="text-center py-8 bg-gray-50 rounded-lg border">
-                <User className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-sm font-medium text-gray-900">Ders programı bulunamadı</h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  Seçilen öğretmen ve gün için ders programı henüz oluşturulmamış.
-                </p>
-                <div className="mt-6">
-                  <Button 
-                    onClick={() => setIsDialogOpen(true)}
-                    className="inline-flex items-center"
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Ders Ekle
-                  </Button>
-                </div>
-              </div>
-            )
-          ) : (
-            <div className="text-center py-8 bg-gray-50 rounded-lg border">
-              <h3 className="mt-2 text-sm font-medium text-gray-900">Görüntülemek için sınıf veya öğretmen seçin</h3>
-              <p className="mt-1 text-sm text-gray-500">
-                Ders programını görüntülemek için yukarıdan bir sınıf veya öğretmen seçin.
-              </p>
             </div>
-          )}
+            
+            <TabsContent value="classes">
+              {selectedClassId ? (
+                <div className="space-y-4">
+                  <h3 className="text-md font-medium mb-2">
+                    {classes?.find(c => c.id.toString() === selectedClassId)?.name} Sınıfı - {getDayName(parseInt(selectedDayOfWeek, 10))} Programı
+                  </h3>
+                  
+                  {sortedSchedules.length > 0 ? (
+                    <div className="border rounded-lg overflow-hidden">
+                      <table className="w-full">
+                        <thead className="bg-gray-50 border-b">
+                          <tr>
+                            <th className="px-4 py-2 text-left text-sm font-medium">Saat</th>
+                            <th className="px-4 py-2 text-left text-sm font-medium">Ders</th>
+                            <th className="px-4 py-2 text-left text-sm font-medium">Öğretmen</th>
+                            <th className="px-4 py-2 text-right text-sm font-medium">İşlemler</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {sortedSchedules.map((schedule) => (
+                            <tr key={schedule.id} className="border-b">
+                              <td className="px-4 py-3 text-sm">
+                                {schedule.period.order}. Ders<br />
+                                <span className="text-xs text-gray-500">
+                                  {schedule.period.startTime} - {schedule.period.endTime}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-sm font-medium">
+                                {schedule.subject.name}
+                              </td>
+                              <td className="px-4 py-3 text-sm">
+                                {getTeacherFullName(schedule.teacher)}
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                <Button 
+                                  variant="destructive" 
+                                  size="sm"
+                                  onClick={() => {
+                                    if (window.confirm("Bu dersi programdan silmek istediğinize emin misiniz?")) {
+                                      deleteScheduleMutation.mutate(schedule.id);
+                                    }
+                                  }}
+                                >
+                                  Sil
+                                </Button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="text-center py-6 bg-gray-50 rounded-lg border">
+                      <CalendarDays className="mx-auto h-12 w-12 text-gray-400" />
+                      <h3 className="mt-2 text-sm font-medium text-gray-900">Ders programı bulunamadı</h3>
+                      <p className="mt-1 text-sm text-gray-500">
+                        Seçilen sınıf ve gün için ders programı henüz oluşturulmamış
+                      </p>
+                      <div className="mt-6">
+                        <Button 
+                          variant="default" 
+                          onClick={() => setIsDialogOpen(true)}
+                        >
+                          <Plus className="mr-2 h-4 w-4" />
+                          Ders Programına Ekle
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-8 bg-gray-50 rounded-lg border">
+                  <School className="mx-auto h-12 w-12 text-gray-400" />
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">Sınıf seçilmedi</h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Ders programını görüntülemek için lütfen bir sınıf seçin
+                  </p>
+                </div>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="teachers">
+              {selectedTeacherId ? (
+                <div className="space-y-4">
+                  <h3 className="text-md font-medium mb-2">
+                    {teachers?.find(t => t.id.toString() === selectedTeacherId)?.name} {teachers?.find(t => t.id.toString() === selectedTeacherId)?.surname} - {getDayName(parseInt(selectedDayOfWeek, 10))} Programı
+                  </h3>
+                  
+                  {sortedSchedules.length > 0 ? (
+                    <div className="border rounded-lg overflow-hidden">
+                      <table className="w-full">
+                        <thead className="bg-gray-50 border-b">
+                          <tr>
+                            <th className="px-4 py-2 text-left text-sm font-medium">Saat</th>
+                            <th className="px-4 py-2 text-left text-sm font-medium">Sınıf</th>
+                            <th className="px-4 py-2 text-left text-sm font-medium">Ders</th>
+                            <th className="px-4 py-2 text-right text-sm font-medium">İşlemler</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {sortedSchedules.map((schedule) => (
+                            <tr key={schedule.id} className="border-b">
+                              <td className="px-4 py-3 text-sm">
+                                {schedule.period.order}. Ders<br />
+                                <span className="text-xs text-gray-500">
+                                  {schedule.period.startTime} - {schedule.period.endTime}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-sm font-medium">
+                                {schedule.class.name}
+                              </td>
+                              <td className="px-4 py-3 text-sm">
+                                {schedule.subject.name}
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                <Button 
+                                  variant="destructive" 
+                                  size="sm"
+                                  onClick={() => {
+                                    if (window.confirm("Bu dersi programdan silmek istediğinize emin misiniz?")) {
+                                      deleteScheduleMutation.mutate(schedule.id);
+                                    }
+                                  }}
+                                >
+                                  Sil
+                                </Button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="text-center py-6 bg-gray-50 rounded-lg border">
+                      <CalendarDays className="mx-auto h-12 w-12 text-gray-400" />
+                      <h3 className="mt-2 text-sm font-medium text-gray-900">Ders programı bulunamadı</h3>
+                      <p className="mt-1 text-sm text-gray-500">
+                        Seçilen öğretmen ve gün için ders programı henüz oluşturulmamış
+                      </p>
+                      <div className="mt-6">
+                        <Button 
+                          variant="default" 
+                          onClick={() => setIsDialogOpen(true)}
+                        >
+                          <Plus className="mr-2 h-4 w-4" />
+                          Ders Programına Ekle
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-8 bg-gray-50 rounded-lg border">
+                  <User className="mx-auto h-12 w-12 text-gray-400" />
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">Öğretmen seçilmedi</h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Ders programını görüntülemek için lütfen bir öğretmen seçin
+                  </p>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>

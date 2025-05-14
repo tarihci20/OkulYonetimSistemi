@@ -41,6 +41,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Update user
+  app.patch("/api/users/:id", isAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "Kullanıcı bulunamadı" });
+      }
+      
+      // Basic validation
+      const updateSchema = z.object({
+        username: z.string().min(3).optional(),
+        fullName: z.string().min(1).optional(),
+        isAdmin: z.boolean().optional(),
+        password: z.string().min(6).optional(),
+      });
+      
+      const result = updateSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Geçersiz veri", errors: result.error.format() });
+      }
+      
+      const updatedUser = await storage.updateUser(userId, result.data);
+      const { password, ...safeUser } = updatedUser;
+      
+      res.json(safeUser);
+    } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(500).json({ message: "Kullanıcı güncellenirken hata oluştu" });
+    }
+  });
+  
   // Teacher routes
   app.get("/api/teachers", isAuthenticated, async (req, res) => {
     try {

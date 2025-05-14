@@ -40,7 +40,7 @@ import {
 // Form validation schema
 const userFormSchema = z.object({
   username: z.string().min(3, 'Kullanıcı adı en az 3 karakter olmalıdır'),
-  password: z.string().min(6, 'Şifre en az 6 karakter olmalıdır'),
+  password: z.string().min(6, 'Şifre en az 6 karakter olmalıdır').optional(),
   fullName: z.string().min(1, 'Ad soyad gereklidir'),
   isAdmin: z.boolean().optional(),
 });
@@ -88,6 +88,7 @@ const UserManagement: React.FC = () => {
       form.setValue('fullName', selectedUser.fullName || '');
       form.setValue('isAdmin', selectedUser.isAdmin);
       // Don't set password as we don't want to expose or change it unless explicitly requested
+      form.unregister('password');
     } else {
       form.reset({
         username: '',
@@ -219,96 +220,103 @@ const UserManagement: React.FC = () => {
                 </DialogDescription>
               </DialogHeader>
             
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="fullName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Ad Soyad</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Ad ve soyadı giriniz" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="username"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Kullanıcı Adı</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Kullanıcı adı giriniz" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Şifre</FormLabel>
-                      <FormControl>
-                        <Input type="password" placeholder="Şifre giriniz" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="isAdmin"
-                  render={({ field }) => (
-                    <FormItem className="flex items-center space-x-2 space-y-0">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <FormLabel className="cursor-pointer">Yönetici yetkisi</FormLabel>
-                      <FormDescription>
-                        (İşaretli olmalıdır)
-                      </FormDescription>
-                    </FormItem>
-                  )}
-                />
-                
-                <DialogFooter>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={handleDialogClose}
-                    disabled={createUserMutation.isPending}
-                  >
-                    İptal
-                  </Button>
-                  <Button 
-                    type="submit"
-                    disabled={createUserMutation.isPending}
-                  >
-                    {createUserMutation.isPending ? (
-                      <div className="flex items-center gap-2">
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        <span>Ekleniyor...</span>
-                      </div>
-                    ) : (
-                      <span>Kaydet</span>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="fullName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Ad Soyad</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ad ve soyadı giriniz" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
                     )}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="username"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Kullanıcı Adı</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Kullanıcı adı giriniz" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          {isEditMode ? 'Şifre (değiştirmek istemiyorsanız boş bırakın)' : 'Şifre'}
+                        </FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="password" 
+                            placeholder={isEditMode ? "Değiştirmek için yeni şifre giriniz" : "Şifre giriniz"} 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="isAdmin"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center space-x-2 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <FormLabel className="cursor-pointer">Yönetici yetkisi</FormLabel>
+                        <FormDescription>
+                          (İşaretli olmalıdır)
+                        </FormDescription>
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <DialogFooter>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={handleDialogClose}
+                      disabled={createUserMutation.isPending || updateUserMutation.isPending}
+                    >
+                      İptal
+                    </Button>
+                    <Button 
+                      type="submit"
+                      disabled={createUserMutation.isPending || updateUserMutation.isPending}
+                    >
+                      {createUserMutation.isPending || updateUserMutation.isPending ? (
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          <span>{isEditMode ? "Güncelleniyor..." : "Ekleniyor..."}</span>
+                        </div>
+                      ) : (
+                        <span>{isEditMode ? "Güncelle" : "Kaydet"}</span>
+                      )}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
       
       {isLoading ? (
@@ -328,6 +336,7 @@ const UserManagement: React.FC = () => {
                 <TableHead>Kullanıcı Adı</TableHead>
                 <TableHead>Yönetici</TableHead>
                 <TableHead>Son Giriş</TableHead>
+                <TableHead className="text-right">İşlemler</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -338,6 +347,16 @@ const UserManagement: React.FC = () => {
                   <TableCell>{user.isAdmin ? 'Evet' : 'Hayır'}</TableCell>
                   <TableCell>
                     {user.lastLogin ? new Date(user.lastLogin).toLocaleString('tr-TR') : 'Hiç giriş yapmadı'}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEditUser(user)}
+                    >
+                      <Pencil className="h-4 w-4 mr-1" />
+                      Düzenle
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

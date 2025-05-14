@@ -29,7 +29,7 @@ import ClassManagement from '@/components/admin/class-management';
 import SubjectManagement from '@/components/admin/subject-management';
 import PeriodManagement from '@/components/admin/period-management';
 import DutyLocationManagement from '@/components/admin/duty-location-management';
-import UserManagement from '@/components/admin/user-management';
+import UserManagement from '@/components/admin/user-management-fixed';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 

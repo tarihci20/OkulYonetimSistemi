@@ -7,8 +7,8 @@ import { UserCog, Plus, Loader2 } from 'lucide-react';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 
+import { Button } from '@/components/ui/button';
 import {
-  Button,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -16,6 +16,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+} from '@/components/ui/dialog';
+import {
   Form,
   FormControl,
   FormDescription,
@@ -23,15 +25,17 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  Input,
-  Checkbox,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui';
+} from '@/components/ui/table';
 
 // Form validation schema
 const userFormSchema = z.object({

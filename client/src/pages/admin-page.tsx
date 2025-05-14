@@ -29,6 +29,7 @@ import ClassManagement from '@/components/admin/class-management';
 import SubjectManagement from '@/components/admin/subject-management';
 import PeriodManagement from '@/components/admin/period-management';
 import DutyLocationManagement from '@/components/admin/duty-location-management';
+import UserManagement from '@/components/admin/user-management';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 
@@ -119,25 +120,7 @@ const AdminPage: React.FC = () => {
             </TabsContent>
             
             <TabsContent value="admins">
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h2 className="text-lg font-medium">Yönetici Kullanıcılar</h2>
-                  <Button>Yeni Yönetici Ekle</Button>
-                </div>
-                
-                <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-md">
-                  <p className="text-yellow-800">
-                    Yönetici eklemek için Oturum Açma sayfasındaki "Kayıt Ol" seçeneğini kullanabilir ve "Yönetici yetkisi" kutucuğunu işaretleyebilirsiniz.
-                  </p>
-                </div>
-                
-                <div className="bg-muted rounded-lg p-6 text-center">
-                  <UserCog className="h-10 w-10 mx-auto mb-4 opacity-50" />
-                  <p className="text-muted-foreground">
-                    Sistem varsayılan yönetici kullanıcısı: <strong>tarihci20</strong>
-                  </p>
-                </div>
-              </div>
+              <UserManagement />
             </TabsContent>
           </Tabs>
         </CardContent>

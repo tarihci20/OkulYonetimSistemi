@@ -372,19 +372,18 @@ const ScheduleManagement: React.FC = () => {
         if (!row || row.length === 0) continue;
         
         const sinifAdi = row[colIndexes.sinif]?.toString().toUpperCase();
-        const ogretmenAdi = row[colIndexes.ogretmen]?.toString().toUpperCase();
+        const ogretmenler = row[colIndexes.ogretmen]?.toString().toUpperCase();
         const dersAdi = row[colIndexes.ders]?.toString().toUpperCase();
         const gunAdi = row[colIndexes.gun]?.toString();
         const saatAdi = row[colIndexes.saat]?.toString().toUpperCase();
         
-        if (!sinifAdi || !ogretmenAdi || !dersAdi || !gunAdi || !saatAdi) {
+        if (!sinifAdi || !ogretmenler || !dersAdi || !gunAdi || !saatAdi) {
           errorCount++;
           errors.push(`Satır ${i+2}: Eksik veri`);
           continue;
         }
         
         const classId = classMap.get(sinifAdi);
-        const teacherId = teacherMap.get(ogretmenAdi);
         const subjectId = subjectMap.get(dersAdi);
         const periodId = periodMap.get(saatAdi);
         const dayOfWeek = dayMap.get(gunAdi);
@@ -395,9 +394,31 @@ const ScheduleManagement: React.FC = () => {
           continue;
         }
         
-        if (!teacherId) {
+        // Öğretmen listesini noktalı virgüle göre bölelim
+        const ogretmenListesi = ogretmenler.split(';').map((o: string) => o.trim());
+        const teacherIds: number[] = [];
+        
+        let missingTeachers = false;
+        
+        // Her öğretmen için ID bul
+        for (const ogretmenAdi of ogretmenListesi) {
+          if (!ogretmenAdi) continue; // Boş isim atlama
+          
+          const teacherId = teacherMap.get(ogretmenAdi);
+          if (!teacherId) {
+            errorCount++;
+            errors.push(`Satır ${i+2}: Öğretmen bulunamadı: ${ogretmenAdi}`);
+            missingTeachers = true;
+            break;
+          }
+          teacherIds.push(teacherId);
+        }
+        
+        if (missingTeachers) continue; // Eksik öğretmen varsa bu satırı atla
+        
+        if (teacherIds.length === 0) {
           errorCount++;
-          errors.push(`Satır ${i+2}: Öğretmen bulunamadı: ${ogretmenAdi}`);
+          errors.push(`Satır ${i+2}: Hiç öğretmen bulunamadı.`);
           continue;
         }
         
@@ -420,16 +441,17 @@ const ScheduleManagement: React.FC = () => {
         }
         
         try {
-          // Dersi ekle
-          await apiRequest("POST", "/api/schedules", {
-            classId,
-            teacherId,
-            subjectId,
-            periodId,
-            dayOfWeek
-          });
-          
-          successCount++;
+          // Tüm öğretmenler için ders programı ekle
+          for (const teacherId of teacherIds) {
+            await apiRequest("POST", "/api/schedules", {
+              classId,
+              teacherId,
+              subjectId,
+              periodId,
+              dayOfWeek
+            });
+            successCount++;
+          }
         } catch (error) {
           errorCount++;
           errors.push(`Satır ${i+2}: API hatası: ${(error as Error).message}`);
@@ -538,7 +560,11 @@ const ScheduleManagement: React.FC = () => {
                 <DialogTitle>Excel'den Ders Programı Yükle</DialogTitle>
                 <DialogDescription>
                   Toplu olarak ders programı eklemek için Excel dosyası yükleyin.
-                  Dosyanızda şu sütunlar olmalı: Sınıf, Öğretmen, Ders, Gün, Saat
+                  Dosyanızda şu sütunlar olmalı: Sınıf, Öğretmen, Ders, Gün, Saat.
+                  <br /><br />
+                  <span className="font-medium">Aynı derse birden fazla öğretmen eklemek için:</span> "Öğretmen" sütununda isimleri noktalı virgül (;) ile ayırın. 
+                  <br />
+                  <span className="text-sm text-gray-600">Örnek: AYŞE YILMAZ; MEHMET KOÇ; ALİ ÖZTÜRK</span>
                 </DialogDescription>
               </DialogHeader>
               

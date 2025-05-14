@@ -208,10 +208,29 @@ const TeacherSchedule: React.FC = () => {
                     </div>
                   </div>
                   <div className="mt-1 flex items-center">
-                    <div className="w-10 h-10 rounded bg-primary bg-opacity-10 text-primary flex items-center justify-center font-bold text-sm">
-                      {schedule.className}
-                    </div>
-                    <div className="ml-2">
+                    {/* Sınıf adından seviyeyi belirle (5/A -> 5) */}
+                    {(() => {
+                      const gradeMatch = schedule.className.match(/(\d+)/);
+                      const grade = gradeMatch ? parseInt(gradeMatch[1]) : 0;
+                      
+                      // Her sınıf seviyesi için farklı renk
+                      const classColors = {
+                        5: { bg: 'bg-blue-100', text: 'text-blue-800' },
+                        6: { bg: 'bg-green-100', text: 'text-green-800' },
+                        7: { bg: 'bg-purple-100', text: 'text-purple-800' },
+                        8: { bg: 'bg-amber-100', text: 'text-amber-800' }
+                      };
+                      
+                      const colors = classColors[grade as keyof typeof classColors] || 
+                                     { bg: 'bg-primary/10', text: 'text-primary' };
+                      
+                      return (
+                        <div className={`w-10 h-10 rounded ${colors.bg} ${colors.text} flex items-center justify-center font-bold text-sm`}>
+                          {schedule.className}
+                        </div>
+                      );
+                    })()}
+                    <div className="ml-2 font-medium">
                       {schedule.subject}
                     </div>
                   </div>

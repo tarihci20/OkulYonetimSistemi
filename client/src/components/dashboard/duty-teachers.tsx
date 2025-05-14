@@ -79,24 +79,48 @@ const DutyTeachers: React.FC = () => {
       
       <div className="overflow-y-auto max-h-[320px]">
         {data && data.length > 0 ? (
-          data.map((dutyTeacher: DutyTeacher) => (
-            <div key={dutyTeacher.id} className="flex items-center p-3 border-b last:border-b-0">
-              <div className="w-10 h-10 rounded-full bg-warning bg-opacity-10 text-warning flex items-center justify-center">
-                <UserCheck className="h-5 w-5" />
-              </div>
-              <div className="ml-3 flex-1">
-                <div className="font-medium">{dutyTeacher.teacher.fullName}</div>
-                <div className="text-sm text-neutral-500">
-                  {dutyTeacher.location.name} - {dutyTeacher.dutyType === 'break_time' ? 'Ara Nöbet' : 'Tüm Gün'}
+          data.map((dutyTeacher: DutyTeacher) => {
+            // Nöbet alanına göre farklı renk belirleme
+            const locationColors = {
+              'Bahçe': { bg: 'bg-green-50', icon: 'bg-green-100 text-green-600' },
+              '1. Kat': { bg: 'bg-blue-50', icon: 'bg-blue-100 text-blue-600' },
+              '2. Kat': { bg: 'bg-purple-50', icon: 'bg-purple-100 text-purple-600' },
+              'Kantin': { bg: 'bg-amber-50', icon: 'bg-amber-100 text-amber-600' },
+              'Koridor': { bg: 'bg-indigo-50', icon: 'bg-indigo-100 text-indigo-600' },
+              'Giriş': { bg: 'bg-sky-50', icon: 'bg-sky-100 text-sky-600' },
+              'Spor Salonu': { bg: 'bg-red-50', icon: 'bg-red-100 text-red-600' },
+              'Kütüphane': { bg: 'bg-emerald-50', icon: 'bg-emerald-100 text-emerald-600' }
+            };
+            
+            // Varsayılan veya eşleşen renkleri al
+            const colors = locationColors[dutyTeacher.location.name as keyof typeof locationColors] || 
+                          { bg: 'bg-warning/5', icon: 'bg-warning/10 text-warning' };
+                          
+            return (
+              <div 
+                key={dutyTeacher.id} 
+                className={`flex items-center p-3 border-b last:border-b-0 ${colors.bg}`}
+              >
+                <div className={`w-10 h-10 rounded-full ${colors.icon} flex items-center justify-center`}>
+                  <UserCheck className="h-5 w-5" />
+                </div>
+                <div className="ml-3 flex-1">
+                  <div className="font-medium">{dutyTeacher.teacher.fullName}</div>
+                  <div className="text-sm text-neutral-600 font-medium">
+                    {dutyTeacher.location.name}
+                  </div>
+                  <div className="text-xs text-neutral-500">
+                    {dutyTeacher.dutyType === 'break_time' ? 'Ara Nöbet' : 'Tüm Gün'}
+                  </div>
+                </div>
+                <div className="ml-auto">
+                  <span className={`text-xs ${isTeacherOnDuty(dutyTeacher) ? 'bg-success bg-opacity-10 text-success' : 'bg-neutral-100 text-neutral-600'} px-2 py-1 rounded-full`}>
+                    {isTeacherOnDuty(dutyTeacher) ? 'Aktif' : 'Pasif'}
+                  </span>
                 </div>
               </div>
-              <div className="ml-auto">
-                <span className={`text-xs ${isTeacherOnDuty(dutyTeacher) ? 'bg-success bg-opacity-10 text-success' : 'bg-neutral-100 text-neutral-600'} px-2 py-1 rounded-full`}>
-                  {isTeacherOnDuty(dutyTeacher) ? 'Aktif' : 'Pasif'}
-                </span>
-              </div>
-            </div>
-          ))
+            );
+          })
         ) : (
           <div className="flex flex-col items-center justify-center py-8 text-neutral-400">
             <ClipboardList className="h-8 w-8 mb-2" />

@@ -149,16 +149,34 @@ const ActiveClasses: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {classSchedules.map((classItem) => (
-                  <tr 
-                    key={`${classItem.className}-${classItem.periodId}`} 
-                    className={classItem.empty ? 'bg-gray-50' : 'hover:bg-primary/5'}
-                  >
-                    <td className="border px-4 py-2 font-medium">{classItem.className}</td>
-                    <td className="border px-4 py-2">{classItem.subject}</td>
-                    <td className="border px-4 py-2">{classItem.teacher}</td>
-                  </tr>
-                ))}
+                {classSchedules.map((classItem, index) => {
+                  // Sınıf adından rakamı ayır (5/A -> 5)
+                  const gradeMatch = classItem.className.match(/(\d+)/);
+                  const grade = gradeMatch ? parseInt(gradeMatch[1]) : 0;
+                  
+                  // Sınıf seviyesine göre farklı renk sınıfları belirle
+                  const rowColors = {
+                    5: 'bg-blue-50 hover:bg-blue-100',
+                    6: 'bg-green-50 hover:bg-green-100',
+                    7: 'bg-purple-50 hover:bg-purple-100',
+                    8: 'bg-amber-50 hover:bg-amber-100'
+                  };
+                  
+                  const rowColor = classItem.empty 
+                    ? 'bg-gray-50' 
+                    : (rowColors[grade as keyof typeof rowColors] || 'bg-primary/5 hover:bg-primary/10');
+                  
+                  return (
+                    <tr 
+                      key={`${classItem.className}-${classItem.periodId}`} 
+                      className={rowColor}
+                    >
+                      <td className="border px-4 py-2 font-medium">{classItem.className}</td>
+                      <td className="border px-4 py-2">{classItem.subject}</td>
+                      <td className="border px-4 py-2">{classItem.teacher}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           ) : (

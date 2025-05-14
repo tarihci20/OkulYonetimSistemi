@@ -101,11 +101,22 @@ const AbsentTeacherPage: React.FC = () => {
   // Add absence mutation
   const addAbsenceMutation = useMutation({
     mutationFn: async (values: AbsenceFormValues) => {
+      // Seçilen tarihe ait bir gün için başlangıç ve bitiş tarihleri oluştur
+      const selectedDate = new Date(values.date);
+      
+      // Başlangıç tarihi, seçilen günün başlangıcı (00:00:00)
+      const startDate = new Date(selectedDate);
+      startDate.setHours(0, 0, 0, 0);
+      
+      // Bitiş tarihi, seçilen günün sonu (23:59:59)
+      const endDate = new Date(selectedDate);
+      endDate.setHours(23, 59, 59, 999);
+      
       return await apiRequest("POST", "/api/absences", {
         teacherId: parseInt(values.teacherId),
         reason: values.reason,
-        startDate: values.date.toISOString(),
-        endDate: values.date.toISOString(),
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
       });
     },
     onSuccess: () => {

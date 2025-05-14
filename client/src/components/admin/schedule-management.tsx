@@ -53,7 +53,7 @@ const scheduleFormSchema = z.object({
   classId: z.string().min(1, "Sınıf seçmeniz gerekiyor"),
   teacherId: z.string().min(1, "Öğretmen seçmeniz gerekiyor"),
   subjectId: z.string().min(1, "Ders seçmeniz gerekiyor"),
-  periodId: z.string().min(1, "Ders saati seçmeniz gerekiyor"),
+  periodIds: z.array(z.string()).min(1, "En az bir ders saati seçmeniz gerekiyor"),
   dayOfWeek: z.string().min(1, "Gün seçmeniz gerekiyor"),
 });
 

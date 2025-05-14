@@ -48,6 +48,7 @@ export interface IStorage {
   
   // Schedule management
   getAllSchedules(): Promise<Schedule[]>;
+  getSchedule(id: number): Promise<Schedule | undefined>;
   getSchedulesByTeacher(teacherId: number): Promise<Schedule[]>;
   getSchedulesByClass(classId: number): Promise<Schedule[]>;
   getSchedulesByDay(dayOfWeek: number): Promise<Schedule[]>;
@@ -405,6 +406,10 @@ export class MemStorage implements IStorage {
   // Schedule Methods
   async getAllSchedules(): Promise<Schedule[]> {
     return Array.from(this.schedulesData.values());
+  }
+  
+  async getSchedule(id: number): Promise<Schedule | undefined> {
+    return this.schedulesData.get(id);
   }
   
   async getSchedulesByTeacher(teacherId: number): Promise<Schedule[]> {
@@ -834,6 +839,11 @@ export class DatabaseStorage implements IStorage {
   // Schedule Methods
   async getAllSchedules(): Promise<Schedule[]> {
     return await db.select().from(schedules);
+  }
+  
+  async getSchedule(id: number): Promise<Schedule | undefined> {
+    const result = await db.select().from(schedules).where(eq(schedules.id, id));
+    return result[0];
   }
   
   async getSchedulesByTeacher(teacherId: number): Promise<Schedule[]> {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import {
@@ -38,6 +38,9 @@ import {
   TabsList, 
   TabsTrigger 
 } from '@/components/ui/tabs';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Progress } from "@/components/ui/progress";
+import * as XLSX from 'xlsx';
 import { useToast } from '@/hooks/use-toast';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -124,10 +127,17 @@ interface ScheduleWithDetails {
 
 const ScheduleManagement: React.FC = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isExcelDialogOpen, setIsExcelDialogOpen] = useState(false);
   const [selectedTab, setSelectedTab] = useState<string>("classes");
   const [selectedClassId, setSelectedClassId] = useState<string>("");
   const [selectedTeacherId, setSelectedTeacherId] = useState<string>("");
   const [selectedDayOfWeek, setSelectedDayOfWeek] = useState<string>("1"); // Pazartesi varsayılan
+  const [excelFile, setExcelFile] = useState<File | null>(null);
+  const [excelData, setExcelData] = useState<any[]>([]);
+  const [excelPreview, setExcelPreview] = useState<any[]>([]);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { toast } = useToast();
 
@@ -227,6 +237,239 @@ const ScheduleManagement: React.FC = () => {
       });
     },
   });
+
+  // Excel işlemleri
+  const handleExcelFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      setExcelFile(file);
+      
+      // Excel dosyasını oku
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        if (evt.target && evt.target.result) {
+          try {
+            const data = new Uint8Array(evt.target.result as ArrayBuffer);
+            const workbook = XLSX.read(data, { type: 'array' });
+            
+            // İlk sayfayı al
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            
+            // JSON'a dönüştür
+            const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+            setExcelData(jsonData);
+            
+            // Önizleme için ilk 5 satırı al (başlık satırı dahil)
+            setExcelPreview(jsonData.slice(0, 6));
+            
+            toast({
+              title: "Excel dosyası yüklendi",
+              description: `${jsonData.length} satır başarıyla okundu.`,
+            });
+          } catch (error) {
+            toast({
+              title: "Hata",
+              description: "Excel dosyası okunamadı. Geçerli bir Excel dosyası olduğundan emin olun.",
+              variant: "destructive",
+            });
+          }
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+  };
+  
+  // Excel verilerini işle ve programa ekle
+  const processExcelData = async () => {
+    if (!excelData || excelData.length <= 1) {
+      toast({
+        title: "Hata",
+        description: "İşlenecek veri bulunamadı veya sadece başlık satırı var.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      setIsImporting(true);
+      setImportProgress(0);
+      
+      // Başlıklar ilk satırda olmalı
+      const headers = excelData[0] as string[];
+      const dataRows = excelData.slice(1) as any[];
+      
+      // Gerekli sütunları kontrol et (örnek: Sınıf, Öğretmen, Ders, Gün, Saat sütunları gerekli)
+      const requiredColumns = ["Sınıf", "Öğretmen", "Ders", "Gün", "Saat"];
+      const missingColumns = requiredColumns.filter(col => !headers.includes(col));
+      
+      if (missingColumns.length > 0) {
+        toast({
+          title: "Excel formatı uygun değil",
+          description: `Aşağıdaki sütunlar eksik: ${missingColumns.join(", ")}`,
+          variant: "destructive",
+        });
+        setIsImporting(false);
+        return;
+      }
+      
+      // Sütun indexlerini bul
+      const colIndexes = {
+        sinif: headers.indexOf("Sınıf"),
+        ogretmen: headers.indexOf("Öğretmen"),
+        ders: headers.indexOf("Ders"),
+        gun: headers.indexOf("Gün"),
+        saat: headers.indexOf("Saat")
+      };
+      
+      // Öğretmen, sınıf ve ders eşleştirmesi için kullanılacak haritalar
+      const teacherMap = new Map<string, number>();
+      const classMap = new Map<string, number>();
+      const subjectMap = new Map<string, number>();
+      const periodMap = new Map<string, number>();
+      const dayMap = new Map<string, number>([
+        ["Pazartesi", 1], 
+        ["Salı", 2], 
+        ["Çarşamba", 3], 
+        ["Perşembe", 4], 
+        ["Cuma", 5]
+      ]);
+      
+      // Verileri haritala
+      if (teachers) {
+        teachers.forEach(t => {
+          const fullName = `${t.name} ${t.surname}`;
+          teacherMap.set(fullName.toUpperCase(), t.id);
+        });
+      }
+      
+      if (classes) {
+        classes.forEach(c => {
+          classMap.set(c.name.toUpperCase(), c.id);
+        });
+      }
+      
+      if (subjects) {
+        subjects.forEach(s => {
+          subjectMap.set(s.name.toUpperCase(), s.id);
+        });
+      }
+      
+      if (periods) {
+        periods.forEach(p => {
+          periodMap.set(p.name.toUpperCase(), p.id);
+        });
+      }
+      
+      // Başarılı ve başarısız işlemleri takip et
+      let successCount = 0;
+      let errorCount = 0;
+      const errors: string[] = [];
+      
+      // Satırları işle
+      for (let i = 0; i < dataRows.length; i++) {
+        const row = dataRows[i];
+        if (!row || row.length === 0) continue;
+        
+        const sinifAdi = row[colIndexes.sinif]?.toString().toUpperCase();
+        const ogretmenAdi = row[colIndexes.ogretmen]?.toString().toUpperCase();
+        const dersAdi = row[colIndexes.ders]?.toString().toUpperCase();
+        const gunAdi = row[colIndexes.gun]?.toString();
+        const saatAdi = row[colIndexes.saat]?.toString().toUpperCase();
+        
+        if (!sinifAdi || !ogretmenAdi || !dersAdi || !gunAdi || !saatAdi) {
+          errorCount++;
+          errors.push(`Satır ${i+2}: Eksik veri`);
+          continue;
+        }
+        
+        const classId = classMap.get(sinifAdi);
+        const teacherId = teacherMap.get(ogretmenAdi);
+        const subjectId = subjectMap.get(dersAdi);
+        const periodId = periodMap.get(saatAdi);
+        const dayOfWeek = dayMap.get(gunAdi);
+        
+        if (!classId) {
+          errorCount++;
+          errors.push(`Satır ${i+2}: Sınıf bulunamadı: ${sinifAdi}`);
+          continue;
+        }
+        
+        if (!teacherId) {
+          errorCount++;
+          errors.push(`Satır ${i+2}: Öğretmen bulunamadı: ${ogretmenAdi}`);
+          continue;
+        }
+        
+        if (!subjectId) {
+          errorCount++;
+          errors.push(`Satır ${i+2}: Ders bulunamadı: ${dersAdi}`);
+          continue;
+        }
+        
+        if (!periodId) {
+          errorCount++;
+          errors.push(`Satır ${i+2}: Saat bulunamadı: ${saatAdi}`);
+          continue;
+        }
+        
+        if (!dayOfWeek) {
+          errorCount++;
+          errors.push(`Satır ${i+2}: Geçersiz gün: ${gunAdi}. (Pazartesi, Salı, Çarşamba, Perşembe, Cuma olmalı)`);
+          continue;
+        }
+        
+        try {
+          // Mevcut çakışma kontrolü yapılabilir
+          
+          // Dersi ekle
+          await apiRequest("POST", "/api/schedules", {
+            classId,
+            teacherId,
+            subjectId,
+            periodId,
+            dayOfWeek
+          });
+          
+          successCount++;
+        } catch (error) {
+          errorCount++;
+          errors.push(`Satır ${i+2}: API hatası: ${(error as Error).message}`);
+        }
+        
+        // İlerleme durumunu güncelle
+        setImportProgress(Math.round(((i + 1) / dataRows.length) * 100));
+      }
+      
+      // İşlem sonuçlarını göster
+      queryClient.invalidateQueries({ queryKey: ['/api/enhanced/schedules'] });
+      
+      toast({
+        title: "Excel import tamamlandı",
+        description: `${successCount} ders başarıyla eklendi. ${errorCount} hatalı satır.`,
+        variant: errorCount > 0 ? "destructive" : "default",
+      });
+      
+      if (errors.length > 0) {
+        console.error("Excel import hataları:", errors);
+      }
+      
+      setIsExcelDialogOpen(false);
+      setExcelFile(null);
+      setExcelData([]);
+      setExcelPreview([]);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    } catch (error) {
+      toast({
+        title: "Excel import hatası",
+        description: `İşlem sırasında beklenmeyen bir hata oluştu: ${(error as Error).message}`,
+        variant: "destructive",
+      });
+      console.error("Excel import hatası:", error);
+    } finally {
+      setIsImporting(false);
+    }
+  };
 
   // Form submit handler
   const onSubmit = (values: ScheduleFormValues) => {

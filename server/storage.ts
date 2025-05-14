@@ -751,6 +751,38 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
   
+  async updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined> {
+    const result = await db
+      .update(users)
+      .set(userData)
+      .where(eq(users.id, id))
+      .returning();
+    return result[0];
+  }
+  
+  async deleteUser(id: number): Promise<boolean> {
+    // Check if this is the last admin user
+    const allUsers = await this.getAllUsers();
+    const admins = allUsers.filter(user => user.isAdmin);
+    
+    // Get the user to delete
+    const userToDelete = await this.getUser(id);
+    
+    // If this is the last admin or it's the default admin, don't allow deletion
+    if (!userToDelete || 
+        (userToDelete.isAdmin && admins.length <= 1) || 
+        userToDelete.username === 'admin') {
+      return false;
+    }
+    
+    const result = await db
+      .delete(users)
+      .where(eq(users.id, id))
+      .returning();
+    
+    return result.length > 0;
+  }
+  
   // Teacher Methods
   async getAllTeachers(): Promise<Teacher[]> {
     const teachersList = await db.select().from(teachers);

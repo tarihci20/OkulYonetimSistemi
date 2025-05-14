@@ -51,9 +51,9 @@ import { CalendarDays, CalendarRange, Plus, School, User } from 'lucide-react';
 // Ders programı formunu doğrulama şeması
 const scheduleFormSchema = z.object({
   classId: z.string().min(1, "Sınıf seçmeniz gerekiyor"),
-  teacherId: z.string().min(1, "Öğretmen seçmeniz gerekiyor"),
+  teacherIds: z.array(z.string()).min(1, "En az bir öğretmen seçmeniz gerekiyor"),
   subjectId: z.string().min(1, "Ders seçmeniz gerekiyor"),
-  periodIds: z.array(z.string()).min(1, "En az bir ders saati seçmeniz gerekiyor"),
+  periodId: z.string().min(1, "Ders saati seçmeniz gerekiyor"),
   dayOfWeek: z.string().min(1, "Gün seçmeniz gerekiyor"),
 });
 
@@ -167,9 +167,9 @@ const ScheduleManagement: React.FC = () => {
     resolver: zodResolver(scheduleFormSchema),
     defaultValues: {
       classId: "",
-      teacherId: "",
+      teacherIds: [],
       subjectId: "",
-      periodIds: [],
+      periodId: "",
       dayOfWeek: "1",
     },
   });
@@ -179,9 +179,9 @@ const ScheduleManagement: React.FC = () => {
     if (isDialogOpen) {
       form.reset({
         classId: "",
-        teacherId: "",
+        teacherIds: [],
         subjectId: "",
-        periodIds: [],
+        periodId: "",
         dayOfWeek: "1",
       });
     }
@@ -190,15 +190,15 @@ const ScheduleManagement: React.FC = () => {
   // Create schedule mutation
   const createScheduleMutation = useMutation({
     mutationFn: async (values: ScheduleFormValues) => {
-      const { periodIds, ...restValues } = values;
+      const { teacherIds, ...restValues } = values;
       
-      // Birden fazla ders için toplu işlem
-      const createPromises = periodIds.map(async (periodId) => {
+      // Birden fazla öğretmen için toplu işlem
+      const createPromises = teacherIds.map(async (teacherId) => {
         const transformedValues = {
           classId: parseInt(restValues.classId, 10),
-          teacherId: parseInt(restValues.teacherId, 10),
+          teacherId: parseInt(teacherId, 10),
           subjectId: parseInt(restValues.subjectId, 10),
-          periodId: parseInt(periodId, 10),
+          periodId: parseInt(restValues.periodId, 10),
           dayOfWeek: parseInt(restValues.dayOfWeek, 10),
         };
         return await apiRequest("POST", "/api/schedules", transformedValues);
@@ -207,10 +207,10 @@ const ScheduleManagement: React.FC = () => {
       return await Promise.all(createPromises);
     },
     onSuccess: (_, variables) => {
-      const periodCount = variables.periodIds.length;
+      const teacherCount = variables.teacherIds.length;
       toast({
         title: "Ders programı eklendi",
-        description: `${periodCount} ders programı başarıyla kaydedildi.`,
+        description: `${teacherCount} öğretmen ile ders programı başarıyla kaydedildi.`,
       });
       queryClient.invalidateQueries({ queryKey: ['/api/enhanced/schedules'] });
       setIsDialogOpen(false);
@@ -711,27 +711,36 @@ const ScheduleManagement: React.FC = () => {
                   
                   <FormField
                     control={form.control}
-                    name="teacherId"
+                    name="teacherIds"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Öğretmen</FormLabel>
-                        <Select 
-                          onValueChange={field.onChange} 
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Öğretmen seçin" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {teachers?.map((t) => (
-                              <SelectItem key={t.id} value={t.id.toString()}>
+                        <FormLabel>Öğretmenler (Birden fazla seçebilirsiniz)</FormLabel>
+                        <div className="border rounded-md p-4 space-y-2">
+                          {teachers?.map((t) => (
+                            <div key={t.id} className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id={`teacher-${t.id}`}
+                                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                value={t.id.toString()}
+                                checked={field.value?.includes(t.id.toString())}
+                                onChange={(e) => {
+                                  const value = t.id.toString();
+                                  if (e.target.checked) {
+                                    field.onChange([...field.value || [], value]);
+                                  } else {
+                                    field.onChange(
+                                      field.value?.filter((item) => item !== value) || []
+                                    );
+                                  }
+                                }}
+                              />
+                              <label htmlFor={`teacher-${t.id}`} className="text-sm">
                                 {t.name} {t.surname} ({t.branch})
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                              </label>
+                            </div>
+                          ))}
+                        </div>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -796,36 +805,27 @@ const ScheduleManagement: React.FC = () => {
                     
                     <FormField
                       control={form.control}
-                      name="periodIds"
+                      name="periodId"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Ders Saatleri (Birden fazla seçebilirsiniz)</FormLabel>
-                          <div className="border rounded-md p-4 space-y-2">
-                            {periods?.map((p) => (
-                              <div key={p.id} className="flex items-center space-x-2">
-                                <input
-                                  type="checkbox"
-                                  id={`period-${p.id}`}
-                                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                                  value={p.id.toString()}
-                                  checked={field.value?.includes(p.id.toString())}
-                                  onChange={(e) => {
-                                    const value = p.id.toString();
-                                    if (e.target.checked) {
-                                      field.onChange([...field.value || [], value]);
-                                    } else {
-                                      field.onChange(
-                                        field.value?.filter((item) => item !== value) || []
-                                      );
-                                    }
-                                  }}
-                                />
-                                <label htmlFor={`period-${p.id}`} className="text-sm">
+                          <FormLabel>Ders Saati</FormLabel>
+                          <Select 
+                            onValueChange={field.onChange} 
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Ders saati seçin" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {periods?.map((p) => (
+                                <SelectItem key={p.id} value={p.id.toString()}>
                                   {p.order}. Ders ({p.startTime}-{p.endTime})
-                                </label>
-                              </div>
-                            ))}
-                          </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}

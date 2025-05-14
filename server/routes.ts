@@ -74,6 +74,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Delete user
+  app.delete("/api/users/:id", isAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      
+      // Check if the user exists
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "Kullanıcı bulunamadı" });
+      }
+      
+      // Don't allow deletion of built-in admin user
+      if (user.username === 'admin') {
+        return res.status(403).json({ 
+          message: "Varsayılan yönetici kullanıcısı silinemez" 
+        });
+      }
+      
+      // Check to prevent deleting the last admin account
+      const allUsers = await storage.getAllUsers();
+      const admins = allUsers.filter(u => u.isAdmin);
+      
+      if (user.isAdmin && admins.length <= 1) {
+        return res.status(403).json({ 
+          message: "Son yönetici hesabı silinemez. Önce başka bir yönetici hesabı oluşturun." 
+        });
+      }
+      
+      const result = await storage.deleteUser(userId);
+      
+      if (result) {
+        res.status(200).json({ success: true });
+      } else {
+        res.status(400).json({ message: "Kullanıcı silinemedi" });
+      }
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ message: "Kullanıcı silinirken hata oluştu" });
+    }
+  });
+  
   // Teacher routes
   app.get("/api/teachers", isAuthenticated, async (req, res) => {
     try {

@@ -3,7 +3,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { UserCog, Plus, Loader2, Pencil, Trash2, RefreshCw } from 'lucide-react';
+import { UserCog, Plus, Loader2, Pencil, Trash2, RefreshCw, AlertTriangle } from 'lucide-react';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 
@@ -17,6 +17,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   Form,
   FormControl,
@@ -59,6 +70,8 @@ const UserManagement: React.FC = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const { toast } = useToast();
   
   // Fetch users
@@ -161,6 +174,35 @@ const UserManagement: React.FC = () => {
     },
   });
   
+  // Delete user mutation
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: number) => {
+      const res = await apiRequest('DELETE', `/api/users/${userId}`);
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Silme işlemi başarısız oldu');
+      }
+      return true;
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Başarılı',
+        description: 'Yönetici başarıyla silindi.',
+      });
+      refetch(); // Explicitly refetch users
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+      setUserToDelete(null);
+      setDeleteDialogOpen(false);
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Hata',
+        description: error.message || 'Yönetici silinirken bir hata oluştu.',
+        variant: 'destructive',
+      });
+    },
+  });
+  
   // Handle form submission
   const onSubmit = (data: UserFormValues) => {
     if (isEditMode && selectedUser) {
@@ -185,6 +227,19 @@ const UserManagement: React.FC = () => {
     setSelectedUser(user);
     setIsEditMode(true);
     setIsDialogOpen(true);
+  };
+  
+  // Handle delete user
+  const handleDeleteClick = (user: User) => {
+    setUserToDelete(user);
+    setDeleteDialogOpen(true);
+  };
+  
+  // Handle confirm delete
+  const handleConfirmDelete = () => {
+    if (userToDelete) {
+      deleteUserMutation.mutate(userToDelete.id);
+    }
   };
 
   return (
@@ -349,14 +404,27 @@ const UserManagement: React.FC = () => {
                     {user.lastLogin ? new Date(user.lastLogin).toLocaleString('tr-TR') : 'Hiç giriş yapmadı'}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEditUser(user)}
-                    >
-                      <Pencil className="h-4 w-4 mr-1" />
-                      Düzenle
-                    </Button>
+                    <div className="flex justify-end space-x-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEditUser(user)}
+                      >
+                        <Pencil className="h-4 w-4 mr-1" />
+                        Düzenle
+                      </Button>
+                      
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteClick(user)}
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        disabled={users.length <= 1 || user.username === 'admin'}
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Sil
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -371,6 +439,43 @@ const UserManagement: React.FC = () => {
           </p>
         </div>
       )}
+      
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Yönetici Silme Onayı</AlertDialogTitle>
+            <AlertDialogDescription>
+              <div className="flex flex-col gap-2">
+                <p>
+                  <strong>{userToDelete?.fullName || userToDelete?.username}</strong> adlı yöneticiyi silmek istediğinize emin misiniz?
+                </p>
+                <div className="flex items-center gap-2 p-2 bg-destructive/10 text-destructive rounded">
+                  <AlertTriangle className="h-5 w-5" />
+                  <p className="text-sm">Bu işlem geri alınamaz!</p>
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteUserMutation.isPending}>İptal</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmDelete}
+              disabled={deleteUserMutation.isPending}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {deleteUserMutation.isPending ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Siliniyor...</span>
+                </div>
+              ) : (
+                <span>Evet, Sil</span>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

@@ -19,6 +19,7 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined>;
   updateUserLastLogin(id: number): Promise<User | undefined>;
+  deleteUser(id: number): Promise<boolean>;
   
   // Teacher management
   getAllTeachers(): Promise<Teacher[]>;
@@ -308,6 +309,24 @@ export class MemStorage implements IStorage {
     };
     this.usersData.set(id, updatedUser);
     return updatedUser;
+  }
+  
+  async deleteUser(id: number): Promise<boolean> {
+    // Check if this is the last admin user
+    const allUsers = await this.getAllUsers();
+    const admins = allUsers.filter(user => user.isAdmin);
+    
+    // Get the user to delete
+    const userToDelete = await this.getUser(id);
+    
+    // If this is the last admin or it's the default admin, don't allow deletion
+    if (!userToDelete || 
+        (userToDelete.isAdmin && admins.length <= 1) || 
+        userToDelete.username === 'admin') {
+      return false;
+    }
+    
+    return this.usersData.delete(id);
   }
   
   // Teacher Methods

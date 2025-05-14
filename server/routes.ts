@@ -637,14 +637,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/absences", isAuthenticated, async (req, res) => {
     try {
-      const validatedData = insertAbsenceSchema.parse(req.body);
+      // Client tarih yapısı değişikliği için düzenleme yapıyoruz
+      let requestData = req.body;
+      
+      // Eğer tek bir date alanı varsa ve startDate/endDate yoksa
+      if (requestData.date && (!requestData.startDate || !requestData.endDate)) {
+        try {
+          const selectedDate = new Date(requestData.date);
+          
+          // Gün başlangıcı (00:00:00)
+          const startOfDay = new Date(selectedDate);
+          startOfDay.setHours(0, 0, 0, 0);
+          
+          // Gün sonu (23:59:59)
+          const endOfDay = new Date(selectedDate);
+          endOfDay.setHours(23, 59, 59, 999);
+          
+          // Mevcut date alanını kaldırıp startDate ve endDate ekliyoruz
+          const { date, ...restData } = requestData;
+          requestData = {
+            ...restData,
+            startDate: startOfDay.toISOString(),
+            endDate: endOfDay.toISOString()
+          };
+        } catch (dateError) {
+          console.error("Tarih dönüştürme hatası:", dateError);
+          return res.status(400).json({ message: "Geçersiz tarih formatı" });
+        }
+      }
+      
+      const validatedData = insertAbsenceSchema.parse(requestData);
       const absence = await storage.createAbsence(validatedData);
       res.status(201).json(absence);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Geçersiz veri", errors: error.errors });
       }
-      res.status(500).json({ message: "İzin eklenirken hata oluştu" });
+      console.error("Gelmeyen öğretmen ekleme hatası:", error);
+      res.status(500).json({ message: "Gelmeyen öğretmen eklenirken hata oluştu" });
     }
   });
   

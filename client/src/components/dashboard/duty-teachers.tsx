@@ -27,6 +27,11 @@ interface DutyTeacher {
   } | null;
 }
 
+interface DutyLocation {
+  id: number;
+  name: string;
+}
+
 const DutyTeachers: React.FC = () => {
   const { formattedDate, turkishDayOfWeek, dayOfWeek, date } = useTurkishDate({ 
     updateInterval: 60000 // Her 1 dakikada bir güncelle
@@ -35,6 +40,13 @@ const DutyTeachers: React.FC = () => {
   // Her gün gece yarısında güncellenmesi için refetch yapılacak bir key oluşturalım
   const dateKey = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
   
+  // Nöbet yerlerini çek
+  const { data: dutyLocationsData, isLoading: isLoadingLocations } = useQuery<DutyLocation[]>({
+    queryKey: ["/api/duty-locations"],
+    refetchInterval: 60 * 60 * 1000 // 1 saatte bir güncelle
+  });
+
+  // Nöbet görevlerini çek
   const { data, isLoading, error } = useQuery<DutyTeacher[]>({
     queryKey: ["/api/enhanced/duties", dateKey], // Gün değiştiğinde otomatik refetch yapar
     select: (data) => {
@@ -45,7 +57,7 @@ const DutyTeachers: React.FC = () => {
     refetchInterval: 5 * 60 * 1000 // 5 dakikada bir yeniden veri çek
   });
 
-  if (isLoading) {
+  if (isLoading || isLoadingLocations) {
     return (
       <div className="col-span-1 bg-white rounded-lg shadow-sm p-4 flex justify-center items-center h-64">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-warning border-t-transparent"></div>
@@ -61,16 +73,60 @@ const DutyTeachers: React.FC = () => {
     );
   }
 
-  // Check if teacher is currently on duty
+  // Öğretmenin şu anda nöbet görevinde olup olmadığını kontrol et
   const isTeacherOnDuty = (duty: DutyTeacher) => {
     const now = new Date();
     const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
     
-    // If no period, teacher is on duty all day
+    // Eğer period yoksa, tüm gün nöbetçi
     if (!duty.period) return true;
     
-    // Otherwise, check if current time is in period
+    // Aksi takdirde, şu anki zamanın period içinde olup olmadığını kontrol et
     return currentTime >= duty.period.startTime && currentTime <= duty.period.endTime;
+  };
+
+  // Belirli bir lokasyondaki öğretmenleri göstermek için fonksiyon
+  const renderLocation = (location: DutyLocation) => {
+    // Bu lokasyondaki öğretmenleri filtrele
+    const teachersInLocation = data?.filter(duty => 
+      duty.location.id === location.id
+    ) || [];
+    
+    // Eğer lokasyonda öğretmen yoksa
+    if (teachersInLocation.length === 0) {
+      return (
+        <tr key={location.id}>
+          <td className="border border-gray-300 p-2 bg-red-600 text-white font-bold">{location.name}</td>
+          <td className="border border-gray-300 p-2">-</td>
+        </tr>
+      );
+    }
+    
+    // Lokasyonda öğretmen varsa
+    return teachersInLocation.map((duty, index) => (
+      <tr key={`${location.name}-${duty.id}`}>
+        {index === 0 ? (
+          <td 
+            rowSpan={teachersInLocation.length} 
+            className="border border-gray-300 p-2 bg-red-600 text-white font-bold"
+          >
+            {location.name}
+          </td>
+        ) : null}
+        <td className="border border-gray-300 p-2">
+          <div className="flex items-center justify-between">
+            <span>
+              {duty.teacher.fullName} {duty.dutyType === 'break_time' ? '(Ara Nöbet)' : '(Tüm Gün)'}
+            </span>
+            {isTeacherOnDuty(duty) && (
+              <span className="ml-2 text-xs px-2 py-1 bg-green-500 text-white rounded-full">
+                Aktif
+              </span>
+            )}
+          </div>
+        </td>
+      </tr>
+    ));
   };
 
   return (
@@ -92,44 +148,7 @@ const DutyTeachers: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {/* Nöbet yerlerini listele */}
-              {['Bahçe', '1. Kat', '2. Kat', 'Kantin', 'Koridor', 'Giriş', 'Spor Salonu', 'Kütüphane'].map(locationName => {
-                // Her konum için orada nöbetçi olan öğretmenleri filtrele
-                const teachersInLocation = data.filter(duty => duty.location.name === locationName);
-                
-                // Hiç nöbetçi öğretmen yoksa boş bir hücre göster
-                if (teachersInLocation.length === 0) {
-                  return (
-                    <tr key={locationName}>
-                      <td className="border border-gray-300 p-2 bg-red-600 text-white font-bold">{locationName}</td>
-                      <td className="border border-gray-300 p-2">-</td>
-                    </tr>
-                  );
-                }
-                
-                // Bu konumdaki öğretmenleri göster
-                return teachersInLocation.map((duty, index) => (
-                  <tr key={`${locationName}-${duty.id}`}>
-                    {index === 0 ? (
-                      <td rowSpan={teachersInLocation.length} className="border border-gray-300 p-2 bg-red-600 text-white font-bold">
-                        {locationName}
-                      </td>
-                    ) : null}
-                    <td className="border border-gray-300 p-2">
-                      <div className="flex items-center justify-between">
-                        <span>
-                          {duty.teacher.fullName} {duty.dutyType === 'break_time' ? 'Ara Nöbet' : 'Tüm Gün'}
-                        </span>
-                        {isTeacherOnDuty(duty) && (
-                          <span className="ml-2 text-xs px-2 py-1 bg-green-500 text-white rounded-full">
-                            Aktif
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ));
-              })}
+              {dutyLocationsData && dutyLocationsData.map(renderLocation)}
             </tbody>
           </table>
         ) : (

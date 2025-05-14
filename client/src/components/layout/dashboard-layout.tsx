@@ -95,7 +95,7 @@ export default function DashboardLayout({ children, title }: DashboardLayoutProp
       title: "ANA MENÜ",
       items: [
         {
-          title: "Kontrol Paneli",
+          title: "Hızlı Bakış",
           href: "/",
           icon: <LayoutDashboard className="w-4 h-4" />,
           isActive: location === "/",
@@ -173,8 +173,13 @@ export default function DashboardLayout({ children, title }: DashboardLayoutProp
   const SidebarContent = () => (
     <>
       <div className="p-4 border-b border-neutral-200">
-        <h1 className="text-xl font-bold text-primary">Vildan İdare</h1>
-        <p className="text-sm text-neutral-400">Okul Yönetim Sistemi</p>
+        <div className="flex items-center">
+          <img src="/images/vildan-logo.svg" alt="Vildan Koleji Logo" className="h-8 w-8 mr-2" />
+          <div>
+            <h1 className="text-xl font-bold text-primary">Vildan İdare</h1>
+            <p className="text-sm text-neutral-400">Okul Yönetim Sistemi</p>
+          </div>
+        </div>
       </div>
       
       <nav className="p-2 flex-1 overflow-y-auto">

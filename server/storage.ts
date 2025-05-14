@@ -17,6 +17,7 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   getAllUsers(): Promise<User[]>;
   createUser(user: InsertUser): Promise<User>;
+  updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined>;
   updateUserLastLogin(id: number): Promise<User | undefined>;
   
   // Teacher management
@@ -278,6 +279,23 @@ export class MemStorage implements IStorage {
     const newUser: User = { ...user, id };
     this.usersData.set(id, newUser);
     return newUser;
+  }
+  
+  async updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined> {
+    const user = this.usersData.get(id);
+    if (!user) return undefined;
+    
+    // If updating username, check if it already exists (unless it's the same user)
+    if (userData.username && userData.username !== user.username) {
+      const existingUser = await this.getUserByUsername(userData.username);
+      if (existingUser && existingUser.id !== id) {
+        throw new Error("Bu kullanıcı adı zaten kullanılıyor");
+      }
+    }
+    
+    const updatedUser = { ...user, ...userData };
+    this.usersData.set(id, updatedUser);
+    return updatedUser;
   }
   
   async updateUserLastLogin(id: number): Promise<User | undefined> {

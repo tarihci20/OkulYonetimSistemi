@@ -714,33 +714,66 @@ const ScheduleManagement: React.FC = () => {
                     name="teacherIds"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Öğretmenler (Birden fazla seçebilirsiniz)</FormLabel>
-                        <div className="border rounded-md p-4 space-y-2">
-                          {teachers?.map((t) => (
-                            <div key={t.id} className="flex items-center space-x-2">
-                              <input
-                                type="checkbox"
-                                id={`teacher-${t.id}`}
-                                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                                value={t.id.toString()}
-                                checked={field.value?.includes(t.id.toString())}
-                                onChange={(e) => {
-                                  const value = t.id.toString();
-                                  if (e.target.checked) {
-                                    field.onChange([...field.value || [], value]);
-                                  } else {
-                                    field.onChange(
-                                      field.value?.filter((item) => item !== value) || []
-                                    );
-                                  }
+                        <FormLabel>Öğretmenler</FormLabel>
+                        <div className="space-y-4">
+                          {field.value?.map((teacherId, index) => (
+                            <div key={index} className="flex items-center space-x-3">
+                              <Select 
+                                onValueChange={(value) => {
+                                  const newValues = [...field.value];
+                                  newValues[index] = value;
+                                  field.onChange(newValues);
                                 }}
-                              />
-                              <label htmlFor={`teacher-${t.id}`} className="text-sm">
-                                {t.name} {t.surname} ({t.branch})
-                              </label>
+                                value={teacherId}
+                              >
+                                <FormControl>
+                                  <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Öğretmen seçin" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {teachers?.map((t) => (
+                                    <SelectItem key={t.id} value={t.id.toString()}>
+                                      {t.name} {t.surname} ({t.branch})
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                className="flex-shrink-0 h-9 w-9"
+                                onClick={() => {
+                                  const newValues = [...field.value];
+                                  newValues.splice(index, 1);
+                                  field.onChange(newValues);
+                                }}
+                              >
+                                <span className="sr-only">Sil</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M18 6L6 18M6 6l12 12" />
+                                </svg>
+                              </Button>
                             </div>
                           ))}
+                          
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full"
+                            onClick={() => field.onChange([...field.value || [], ""])}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M12 5v14M5 12h14" />
+                            </svg>
+                            Öğretmen Ekle
+                          </Button>
                         </div>
+                        {field.value?.length === 0 && (
+                          <p className="text-sm text-red-500 mt-2">En az bir öğretmen seçmeniz gerekiyor</p>
+                        )}
                         <FormMessage />
                       </FormItem>
                     )}

@@ -689,7 +689,7 @@ const ScheduleManagement: React.FC = () => {
                         <FormLabel>Sınıf</FormLabel>
                         <Select 
                           onValueChange={field.onChange} 
-                          defaultValue={field.value}
+                          value={field.value || ""}
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -754,7 +754,7 @@ const ScheduleManagement: React.FC = () => {
                         <FormLabel>Ders</FormLabel>
                         <Select 
                           onValueChange={field.onChange} 
-                          defaultValue={field.value}
+                          value={field.value || ""}
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -783,7 +783,7 @@ const ScheduleManagement: React.FC = () => {
                           <FormLabel>Gün</FormLabel>
                           <Select 
                             onValueChange={field.onChange} 
-                            defaultValue={field.value}
+                            value={field.value || ""}
                           >
                             <FormControl>
                               <SelectTrigger>
@@ -811,7 +811,7 @@ const ScheduleManagement: React.FC = () => {
                           <FormLabel>Ders Saati</FormLabel>
                           <Select 
                             onValueChange={field.onChange} 
-                            defaultValue={field.value}
+                            value={field.value || ""}
                           >
                             <FormControl>
                               <SelectTrigger>

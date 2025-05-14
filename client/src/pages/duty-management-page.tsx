@@ -80,6 +80,7 @@ interface Duty {
   teacherId: number;
   locationId: number;
   dayOfWeek: number;
+  dutyType?: 'full_day' | 'break_time'; // Nöbet türü: tüm gün veya ara nöbeti
   notes?: string;
   teacher?: Teacher;
   location?: DutyLocation;
@@ -120,6 +121,7 @@ const DutyManagementPage: React.FC = () => {
     teacherId: '',
     locationId: '',
     dayOfWeek: '',
+    dutyType: 'full_day', // Varsayılan olarak "tüm gün nöbet"
     notes: '',
   });
   
@@ -332,6 +334,7 @@ const DutyManagementPage: React.FC = () => {
       teacherId: duty.teacherId.toString(),
       locationId: duty.locationId.toString(),
       dayOfWeek: duty.dayOfWeek.toString(),
+      dutyType: duty.dutyType || 'full_day',
       notes: duty.notes || '',
     });
     setIsDutyDialogOpen(true);

@@ -82,6 +82,8 @@ export const duties = pgTable("duties", {
   locationId: integer("location_id").notNull(),
   dayOfWeek: integer("day_of_week").notNull(), // 1-7 (Pazartesi-Pazar)
   periodId: integer("period_id"), // Null ise tüm gün nöbeti
+  dutyType: text("duty_type").default("full_day"), // "full_day" veya "break_time"
+  notes: text("notes"),
 });
 
 export const insertDutySchema = createInsertSchema(duties);

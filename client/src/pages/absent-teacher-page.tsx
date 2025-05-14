@@ -48,16 +48,10 @@ import { cn } from '@/lib/utils';
 // Schema for adding new absence
 const absenceFormSchema = z.object({
   teacherId: z.string().min(1, "Öğretmen seçimi zorunludur"),
-  reason: z.string().min(1, "İzin nedeni girilmelidir"),
-  startDate: z.date({
-    required_error: "Başlangıç tarihi seçilmelidir",
+  reason: z.string().min(1, "Gelmeme nedeni girilmelidir"),
+  date: z.date({
+    required_error: "Tarih seçilmelidir",
   }),
-  endDate: z.date({
-    required_error: "Bitiş tarihi seçilmelidir",
-  }),
-}).refine(data => data.endDate >= data.startDate, {
-  message: "Bitiş tarihi başlangıç tarihinden önce olamaz",
-  path: ["endDate"],
 });
 
 type AbsenceFormValues = z.infer<typeof absenceFormSchema>;
@@ -100,8 +94,7 @@ const AbsentTeacherPage: React.FC = () => {
     defaultValues: {
       teacherId: "",
       reason: "",
-      startDate: new Date(),
-      endDate: new Date(),
+      date: new Date(),
     },
   });
   
@@ -111,14 +104,14 @@ const AbsentTeacherPage: React.FC = () => {
       return await apiRequest("POST", "/api/absences", {
         teacherId: parseInt(values.teacherId),
         reason: values.reason,
-        startDate: values.startDate.toISOString(),
-        endDate: values.endDate.toISOString(),
+        startDate: values.date.toISOString(),
+        endDate: values.date.toISOString(),
       });
     },
     onSuccess: () => {
       toast({
-        title: "Öğretmen izni eklendi",
-        description: "Öğretmen izni başarıyla kaydedildi.",
+        title: "Gelmeyen öğretmen eklendi",
+        description: "Gelmeyen öğretmen bilgisi başarıyla kaydedildi.",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/absences'] });
       queryClient.invalidateQueries({ queryKey: ['/api/absences/date/' + new Date().toISOString()] });
@@ -128,7 +121,7 @@ const AbsentTeacherPage: React.FC = () => {
     onError: (error) => {
       toast({
         title: "Hata",
-        description: "Öğretmen izni eklenirken bir hata oluştu: " + error.message,
+        description: "Gelmeyen öğretmen eklenirken bir hata oluştu: " + error.message,
         variant: "destructive",
       });
     },
@@ -140,7 +133,7 @@ const AbsentTeacherPage: React.FC = () => {
   
   if (absencesLoading || teachersLoading) {
     return (
-      <DashboardLayout title="Öğretmen Yoklama">
+      <DashboardLayout title="Gelmeyen Öğretmenler">
         <div className="flex justify-center items-center h-64">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-error border-t-transparent"></div>
         </div>
@@ -149,25 +142,25 @@ const AbsentTeacherPage: React.FC = () => {
   }
   
   return (
-    <DashboardLayout title="Öğretmen Yoklama">
+    <DashboardLayout title="Gelmeyen Öğretmenler">
       <div className="mb-6 flex justify-between items-center">
         <h2 className="text-xl font-semibold flex items-center">
           <UserX className="mr-2 h-5 w-5 text-error" />
-          İzinli Öğretmenler
+          Gelmeyen Öğretmenler
         </h2>
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button className="bg-error hover:bg-error/90">
               <Plus className="mr-2 h-4 w-4" />
-              Öğretmen İzni Ekle
+              Gelmeyen Öğretmen Ekle
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Yeni Öğretmen İzni Ekle</DialogTitle>
+              <DialogTitle>Gelmeyen Öğretmen Ekle</DialogTitle>
               <DialogDescription>
-                İzinli olacak öğretmen ve izin tarih aralığını girin.
+                Gelmeyen öğretmen ve tarihi seçin.
               </DialogDescription>
             </DialogHeader>
             
@@ -219,85 +212,44 @@ const AbsentTeacherPage: React.FC = () => {
                   )}
                 />
                 
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="startDate"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>Başlangıç Tarihi</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant="outline"
-                                className={cn(
-                                  "pl-3 text-left font-normal",
-                                  !field.value && "text-muted-foreground"
-                                )}
-                              >
-                                {field.value ? (
-                                  format(field.value, "PP", { locale: tr })
-                                ) : (
-                                  <span>Tarih seçin</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="endDate"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>Bitiş Tarihi</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant="outline"
-                                className={cn(
-                                  "pl-3 text-left font-normal",
-                                  !field.value && "text-muted-foreground"
-                                )}
-                              >
-                                {field.value ? (
-                                  format(field.value, "PP", { locale: tr })
-                                ) : (
-                                  <span>Tarih seçin</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                <FormField
+                  control={form.control}
+                  name="date"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Tarih</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? (
+                                format(field.value, "PP", { locale: tr })
+                              ) : (
+                                <span>Tarih seçin</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 
                 <DialogFooter>
                   <Button 
@@ -331,10 +283,10 @@ const AbsentTeacherPage: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center">
             <UserX className="mr-2 h-5 w-5" />
-            <span>Bugün İzinli Öğretmenler</span>
+            <span>Bugün Gelmeyen Öğretmenler</span>
           </CardTitle>
           <CardDescription>
-            Bugün için izinli olan öğretmenler ve dersleri
+            Bugün için gelmeyen öğretmenler ve dersleri
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -355,10 +307,9 @@ const AbsentTeacherPage: React.FC = () => {
                     </div>
                     
                     <div className="ml-auto text-sm">
-                      <p className="text-muted-foreground">İzin Nedeni: {absence.reason || "Belirtilmemiş"}</p>
+                      <p className="text-muted-foreground">Gelmeme Nedeni: {absence.reason || "Belirtilmemiş"}</p>
                       <p className="text-muted-foreground">
-                        {format(new Date(absence.startDate), "dd MMMM yyyy", { locale: tr })} - 
-                        {format(new Date(absence.endDate), "dd MMMM yyyy", { locale: tr })}
+                        {format(new Date(absence.startDate), "dd MMMM yyyy", { locale: tr })}
                       </p>
                     </div>
                   </div>
@@ -367,7 +318,7 @@ const AbsentTeacherPage: React.FC = () => {
             ) : (
               <div className="text-center py-8 text-muted-foreground">
                 <UserX className="h-10 w-10 mx-auto mb-2 opacity-50" />
-                <p>Bugün izinli öğretmen bulunmamaktadır.</p>
+                <p>Bugün gelmeyen öğretmen bulunmamaktadır.</p>
               </div>
             )}
           </div>
@@ -380,7 +331,7 @@ const AbsentTeacherPage: React.FC = () => {
             <span>Yerine Görevlendirme Yönetimi</span>
           </CardTitle>
           <CardDescription>
-            İzinli öğretmenlerin yerine görevlendirme yapabilirsiniz
+            Gelmeyen öğretmenlerin yerine görevlendirme yapabilirsiniz
           </CardDescription>
         </CardHeader>
         <CardContent>

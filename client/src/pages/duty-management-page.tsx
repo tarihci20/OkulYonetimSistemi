@@ -588,6 +588,7 @@ const DutyManagementPage: React.FC = () => {
                       <TableHead>Nöbet Yeri</TableHead>
                       <TableHead>Saat</TableHead>
                       <TableHead>Öğretmen</TableHead>
+                      <TableHead className="text-right">İşlemler</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -617,11 +618,21 @@ const DutyManagementPage: React.FC = () => {
                                 {duty.teacher.fullName}
                               </div>
                             </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDeleteDuty(duty.id)}
+                                title="Sil"
+                              >
+                                <Trash className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </TableCell>
                           </TableRow>
                         ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={4} className="h-24 text-center">
+                        <TableCell colSpan={5} className="h-24 text-center">
                           Nöbet kaydı bulunamadı
                         </TableCell>
                       </TableRow>

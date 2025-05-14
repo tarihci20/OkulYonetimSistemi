@@ -607,7 +607,7 @@ const DutyManagementPage: React.FC = () => {
                             <TableCell>
                               {duty.period 
                                 ? `${duty.period.startTime} - ${duty.period.endTime} (${duty.period.order}. Ders)` 
-                                : "Tüm Gün"}
+                                : duty.dutyType === 'break_time' ? "Ara Nöbet" : "Tüm Gün"}
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center">

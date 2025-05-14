@@ -166,7 +166,7 @@ const DutyTeachers: React.FC = () => {
         </div>
       </div>
       
-      <div className="overflow-y-auto max-h-[320px]">
+      <div>
         {data && data.length > 0 ? (
           <table className="min-w-full border-collapse">
             <thead>

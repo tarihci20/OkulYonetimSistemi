@@ -380,13 +380,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Geçersiz ID formatı" });
       }
       
-      const success = await storage.deleteSchedule(id);
-      if (!success) {
+      console.log(`Silinecek ders programı ID: ${id}`);
+      
+      // Önce programın var olup olmadığını kontrol edelim
+      const schedule = await storage.getSchedule(id);
+      if (!schedule) {
+        console.log(`Ders programı bulunamadı: ${id}`);
         return res.status(404).json({ message: "Ders programı bulunamadı" });
       }
       
+      const success = await storage.deleteSchedule(id);
+      if (!success) {
+        console.log(`Silme işlemi başarısız: ${id}`);
+        return res.status(404).json({ message: "Ders programı silinemedi" });
+      }
+      
+      console.log(`Ders programı silindi: ${id}`);
       res.status(204).send();
     } catch (error) {
+      console.error("Ders programı silme hatası:", error);
       res.status(500).json({ message: "Ders programı silinirken hata oluştu" });
     }
   });

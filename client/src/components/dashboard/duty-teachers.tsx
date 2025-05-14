@@ -78,52 +78,54 @@ const DutyTeachers: React.FC = () => {
       
       <div className="overflow-y-auto max-h-[320px]">
         {data && data.length > 0 ? (
-          data.map((dutyTeacher: DutyTeacher) => {
-            // Nöbet alanına göre farklı renk belirleme
-            const locationColors = {
-              'Bahçe': { bg: 'bg-green-50', icon: 'bg-green-100 text-green-600' },
-              '1. Kat': { bg: 'bg-blue-50', icon: 'bg-blue-100 text-blue-600' },
-              '2. Kat': { bg: 'bg-purple-50', icon: 'bg-purple-100 text-purple-600' },
-              'Kantin': { bg: 'bg-amber-50', icon: 'bg-amber-100 text-amber-600' },
-              'Koridor': { bg: 'bg-indigo-50', icon: 'bg-indigo-100 text-indigo-600' },
-              'Giriş': { bg: 'bg-sky-50', icon: 'bg-sky-100 text-sky-600' },
-              'Spor Salonu': { bg: 'bg-red-50', icon: 'bg-red-100 text-red-600' },
-              'Kütüphane': { bg: 'bg-emerald-50', icon: 'bg-emerald-100 text-emerald-600' }
-            };
-            
-            // Varsayılan veya eşleşen renkleri al
-            const colors = locationColors[dutyTeacher.location.name as keyof typeof locationColors] || 
-                          { bg: 'bg-warning/5', icon: 'bg-warning/10 text-warning' };
-                          
-            return (
-              <div 
-                key={dutyTeacher.id} 
-                className={`flex items-center p-3 border-b last:border-b-0 ${colors.bg}`}
-              >
-                <div className={`w-10 h-10 rounded-full ${colors.icon} flex items-center justify-center`}>
-                  <UserCheck className="h-5 w-5" />
-                </div>
-                <div className="ml-3 flex-1">
-                  <div className="font-medium">{dutyTeacher.teacher.fullName}</div>
-                  <div className="text-sm text-neutral-600 font-medium">
-                    {dutyTeacher.location.name}
-                  </div>
-                  <div className="text-xs text-neutral-500">
-                    {dutyTeacher.dutyType === 'break_time' ? 'Ara Nöbet' : 'Tüm Gün'}
-                  </div>
-                </div>
-                <div className="ml-auto">
-                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                    isTeacherOnDuty(dutyTeacher) 
-                      ? 'bg-green-500 text-white' 
-                      : 'bg-neutral-200 text-neutral-600'
-                  }`}>
-                    {isTeacherOnDuty(dutyTeacher) ? 'Aktif' : 'Pasif'}
-                  </span>
-                </div>
-              </div>
-            );
-          })
+          <table className="min-w-full border-collapse">
+            <thead>
+              <tr>
+                <th className="border border-gray-300 bg-gray-100 p-2 text-left">Nöbet Yeri</th>
+                <th className="border border-gray-300 bg-gray-100 p-2 text-left">ÖĞRETMEN</th>
+              </tr>
+            </thead>
+            <tbody>
+              {/* Nöbet yerlerini listele */}
+              {['Bahçe', '1. Kat', '2. Kat', 'Kantin', 'Koridor', 'Giriş', 'Spor Salonu', 'Kütüphane'].map(locationName => {
+                // Her konum için orada nöbetçi olan öğretmenleri filtrele
+                const teachersInLocation = data.filter(duty => duty.location.name === locationName);
+                
+                // Hiç nöbetçi öğretmen yoksa boş bir hücre göster
+                if (teachersInLocation.length === 0) {
+                  return (
+                    <tr key={locationName}>
+                      <td className="border border-gray-300 p-2 bg-red-600 text-white font-bold">{locationName}</td>
+                      <td className="border border-gray-300 p-2">-</td>
+                    </tr>
+                  );
+                }
+                
+                // Bu konumdaki öğretmenleri göster
+                return teachersInLocation.map((duty, index) => (
+                  <tr key={`${locationName}-${duty.id}`}>
+                    {index === 0 ? (
+                      <td rowSpan={teachersInLocation.length} className="border border-gray-300 p-2 bg-red-600 text-white font-bold">
+                        {locationName}
+                      </td>
+                    ) : null}
+                    <td className="border border-gray-300 p-2">
+                      <div className="flex items-center justify-between">
+                        <span>
+                          {duty.teacher.fullName} {duty.dutyType === 'break_time' ? 'Ara Nöbet' : 'Tüm Gün'}
+                        </span>
+                        {isTeacherOnDuty(duty) && (
+                          <span className="ml-2 text-xs px-2 py-1 bg-green-500 text-white rounded-full">
+                            Aktif
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ));
+              })}
+            </tbody>
+          </table>
         ) : (
           <div className="flex flex-col items-center justify-center py-8 text-neutral-400">
             <ClipboardList className="h-8 w-8 mb-2" />

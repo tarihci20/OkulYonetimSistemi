@@ -1,6 +1,6 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { School } from "lucide-react";
+import { School, UserRound } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useTurkishDate } from "@/hooks/use-turkish-date";
@@ -194,6 +194,18 @@ const ActiveClasses: React.FC = () => {
         )}
       </div>
       
+      {/* Dersi Boş Olan Öğretmenler */}
+      {currentPeriod && 
+        <div className="mt-4 border-t pt-3">
+          <h4 className="text-sm font-medium mb-2 flex items-center text-neutral-700">
+            <UserRound className="h-4 w-4 mr-1.5" /> 
+            <span>Bu Ders Saatinde Boş Olan Öğretmenler</span>
+          </h4>
+          
+          <AvailableTeachersSection currentPeriod={currentPeriod} dayOfWeek={dayOfWeek} />
+        </div>
+      }
+
       <div className="mt-3">
         <Link href="/schedule">
           <Button variant="link" className="text-primary text-sm flex items-center p-0 h-auto">
@@ -204,6 +216,58 @@ const ActiveClasses: React.FC = () => {
           </Button>
         </Link>
       </div>
+    </div>
+  );
+};
+
+// Mevcut ders saatinde boş olan öğretmenler bileşeni
+interface AvailableTeachersProps {
+  currentPeriod: Period;
+  dayOfWeek: number;
+}
+
+const AvailableTeachersSection: React.FC<AvailableTeachersProps> = ({ currentPeriod, dayOfWeek }) => {
+  // Tüm öğretmenleri ve ders programını çek
+  const { data: teachers } = useQuery<any[]>({
+    queryKey: ["/api/teachers"]
+  });
+  
+  const { data: schedules } = useQuery<any[]>({
+    queryKey: ["/api/enhanced/schedules"]
+  });
+  
+  // Mevcut ders saatinde programı boş olan öğretmenleri bul
+  const availableTeachers = React.useMemo(() => {
+    if (!teachers || !schedules || !Array.isArray(teachers) || !Array.isArray(schedules)) {
+      return [];
+    }
+    
+    // Mevcut ders saatinde dersi olan öğretmen ID'leri
+    const busyTeacherIds = schedules
+      .filter(s => s.dayOfWeek === dayOfWeek && s.periodId === currentPeriod.id)
+      .map(s => s.teacherId);
+    
+    // Dersi olmayan öğretmenler
+    return teachers
+      .filter(teacher => !busyTeacherIds.includes(teacher.id))
+      .sort((a, b) => `${a.name} ${a.surname}`.localeCompare(`${b.name} ${b.surname}`, 'tr'));
+  }, [teachers, schedules, dayOfWeek, currentPeriod]);
+  
+  if (!availableTeachers.length) {
+    return <div className="text-sm text-neutral-500 italic">Bu ders saatinde tüm öğretmenler dolu</div>;
+  }
+  
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {availableTeachers.map(teacher => (
+        <span 
+          key={teacher.id} 
+          className="inline-flex items-center px-2 py-1 rounded-md text-xs bg-blue-50 text-blue-700 border border-blue-100"
+        >
+          {teacher.name} {teacher.surname} 
+          <span className="text-blue-500 ml-1">({teacher.branch})</span>
+        </span>
+      ))}
     </div>
   );
 };

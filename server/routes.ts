@@ -51,6 +51,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
         };
       });
       
+      // Sıralama işlemi: Önce sınıf numarasına, sonra soyada ve ada göre sırala
+      studentsWithDetails.sort((a, b) => {
+        // Önce sınıf adına göre sırala (5/A önce, 9/C sonra)
+        const classA = a.className.split('/')[0] || '0';
+        const classB = b.className.split('/')[0] || '0';
+        
+        const classANum = parseInt(classA);
+        const classBNum = parseInt(classB);
+        
+        if (classANum !== classBNum) {
+          return classANum - classBNum;
+        }
+        
+        // Aynı sınıfsa şubeye göre sırala (5/A önce, 5/C sonra)
+        const sectionA = a.className.split('/')[1] || '';
+        const sectionB = b.className.split('/')[1] || '';
+        
+        if (sectionA !== sectionB) {
+          return sectionA.localeCompare(sectionB);
+        }
+        
+        // Aynı sınıf ve şubeyse soyadına göre sırala
+        if (a.lastName !== b.lastName) {
+          return a.lastName.localeCompare(b.lastName);
+        }
+        
+        // Son olarak ada göre sırala
+        return a.firstName.localeCompare(b.firstName);
+      });
+      
       console.log(`Öğrenci listesi döndürülüyor: ${studentsWithDetails.length} öğrenci`);
       res.json(studentsWithDetails);
     } catch (error) {
@@ -117,10 +147,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log("Mevcut sınıflar:", normalizedClasses.map(c => c.normalizedName));
       
+      // Mevcut öğrencileri al (tekrarları önlemek için)
+      const existingStudents = await storage.getAllStudents();
+      
       // Öğrencileri içe aktar
       const dataRows = rows.slice(1) as any[];
       const results = {
         imported: 0,
+        updated: 0,
+        skipped: 0,
         failed: 0,
         errors: [] as string[]
       };
@@ -135,7 +170,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Sınıf ID'sini bul
           const className = String(row[classIdx]).trim().toUpperCase();
-          console.log(`Excel'deki sınıf adı: "${className}"`);
           
           const classObj = normalizedClasses.find(c => c.normalizedName === className);
           
@@ -173,18 +207,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Notlar
           const notes = notesIdx !== -1 && row[notesIdx] ? String(row[notesIdx]).trim() : null;
           
-          console.log(`İçe aktarılıyor: ${firstName} ${lastName}, Sınıf: ${classObj.name} (ID: ${classObj.id})`);
+          // Öğrencinin zaten var olup olmadığını kontrol et
+          // Aynı ad, soyad ve sınıfa sahip öğrenci var mı diye kontrol et
+          const existingStudent = existingStudents.find(s => 
+            s.firstName.toUpperCase() === firstName.toUpperCase() && 
+            s.lastName.toUpperCase() === lastName.toUpperCase() && 
+            s.classId === classObj.id
+          );
           
-          // Öğrenciyi oluştur
-          await storage.createStudent({
-            firstName,
-            lastName,
-            classId: classObj.id,
-            studentNumber,
-            notes
-          });
-          
-          results.imported++;
+          if (existingStudent) {
+            // Öğrenci zaten var, güncelle
+            const updated = await storage.updateStudent(existingStudent.id, {
+              studentNumber,
+              notes: notes || existingStudent.notes
+            });
+            
+            if (updated) {
+              results.updated++;
+              console.log(`Güncellendi: ${firstName} ${lastName}, Sınıf: ${classObj.name} (ID: ${existingStudent.id})`);
+            } else {
+              results.skipped++;
+              console.log(`Değişiklik yok: ${firstName} ${lastName}, Sınıf: ${classObj.name} (ID: ${existingStudent.id})`);
+            }
+          } else {
+            // Yeni öğrenci ekle
+            await storage.createStudent({
+              firstName,
+              lastName,
+              classId: classObj.id,
+              studentNumber,
+              notes
+            });
+            
+            results.imported++;
+            console.log(`Eklendi: ${firstName} ${lastName}, Sınıf: ${classObj.name} (ID: ${classObj.id})`);
+          }
         } catch (error) {
           console.error("Student import error:", error);
           results.failed++;
@@ -195,6 +252,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Sonuçları döndür
       res.json({
         imported: results.imported,
+        updated: results.updated,
+        skipped: results.skipped,
         failed: results.failed,
         errors: results.errors.slice(0, 20) // Sadece ilk 20 hatayı göster
       });

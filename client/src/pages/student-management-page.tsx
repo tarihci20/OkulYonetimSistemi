@@ -196,7 +196,7 @@ const StudentManagementPage: React.FC = () => {
       
       toast({
         title: "Excel içe aktarma tamamlandı",
-        description: `${data.imported} öğrenci başarıyla içe aktarıldı.`,
+        description: `${data.imported} öğrenci eklendi, ${data.updated} öğrenci güncellendi, ${data.skipped} öğrenci atlandı.`,
       });
     },
     onError: (error: Error) => {

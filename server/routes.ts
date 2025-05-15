@@ -2,8 +2,10 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
-import { insertTeacherSchema, insertSubjectSchema, insertClassSchema, insertPeriodSchema, insertScheduleSchema, insertDutyLocationSchema, insertDutySchema, insertAbsenceSchema, insertSubstitutionSchema, insertExtraLessonSchema } from "@shared/schema";
+import { insertTeacherSchema, insertSubjectSchema, insertClassSchema, insertPeriodSchema, insertScheduleSchema, insertDutyLocationSchema, insertDutySchema, insertAbsenceSchema, insertSubstitutionSchema, insertExtraLessonSchema, insertStudentSchema } from "@shared/schema";
 import { z } from "zod";
+import multer from "multer";
+import * as XLSX from "xlsx";
 
 // Middleware to check if user is authenticated
 const isAuthenticated = (req: any, res: any, next: any) => {
@@ -24,6 +26,14 @@ const isAdmin = (req: any, res: any, next: any) => {
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication
   setupAuth(app);
+  
+  // Set up multer for file uploads
+  const upload = multer({ 
+    storage: multer.memoryStorage(),
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10MB limit
+    }
+  });
   
   // User routes
   app.get("/api/users", isAdmin, async (req, res) => {

@@ -90,6 +90,38 @@ const StudentManagementPage: React.FC = () => {
     queryKey: ['/api/classes'],
   });
   
+  // Tüm öğrencileri silme mutasyonu
+  const deleteAllStudentsMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch('/api/students/all', {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Tüm öğrencileri silme işlemi sırasında bir hata oluştu');
+      }
+      
+      return await response.json();
+    },
+    onSuccess: () => {
+      // Verileri yenile
+      queryClient.invalidateQueries({ queryKey: ['/api/students'] });
+      
+      toast({
+        title: "Tüm öğrenciler silindi",
+        description: "Tüm öğrenci kayıtları başarıyla silindi.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Hata oluştu",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+  
   // Student mutations
   const studentMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -363,6 +395,18 @@ const StudentManagementPage: React.FC = () => {
               <Button onClick={handleAddStudent}>
                 <Plus className="mr-2 h-4 w-4" />
                 Yeni Öğrenci Ekle
+              </Button>
+              <Button 
+                variant="destructive" 
+                onClick={() => {
+                  if (window.confirm('Tüm öğrencileri silmek istediğinizden emin misiniz? Bu işlem geri alınamaz!')) {
+                    deleteAllStudentsMutation.mutate();
+                  }
+                }}
+                disabled={deleteAllStudentsMutation.isPending}
+              >
+                <Trash className="mr-2 h-4 w-4" />
+                {deleteAllStudentsMutation.isPending ? 'Siliniyor...' : 'Tüm Öğrencileri Sil'}
               </Button>
             </div>
           </div>

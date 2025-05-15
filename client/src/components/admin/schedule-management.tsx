@@ -245,6 +245,38 @@ const ScheduleManagement: React.FC = () => {
     },
   });
   
+  // Tüm programı silme mutasyonu
+  const deleteAllSchedulesMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch('/api/schedules/all', {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Tüm programı silme işlemi sırasında bir hata oluştu');
+      }
+      
+      return await response.json();
+    },
+    onSuccess: () => {
+      // Verileri yenile
+      queryClient.invalidateQueries({ queryKey: ['/api/enhanced/schedules'] });
+      
+      toast({
+        title: "Tüm program silindi",
+        description: "Tüm ders programı başarıyla silindi.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Hata oluştu",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+  
   // Excel işlemleri
   const handleExcelFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;

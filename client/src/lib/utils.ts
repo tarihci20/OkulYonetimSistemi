@@ -130,3 +130,28 @@ export function isSameDay(date1: Date, date2: Date): boolean {
     date1.getDate() === date2.getDate()
   );
 }
+
+// Helper function to format 24hr time for display (e.g. "14:30" to "14:30")
+export function formatTimeForDisplay(timeString: string): string {
+  if (!timeString) return "";
+  
+  // If time is already in the correct format (HH:MM), return it
+  if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(timeString)) {
+    // Remove seconds if present
+    return timeString.split(':').slice(0, 2).join(':');
+  }
+  
+  try {
+    // Try to parse the time string
+    const date = new Date(`1970-01-01T${timeString}`);
+    return date.toLocaleTimeString('tr-TR', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: false 
+    });
+  } catch (e) {
+    // If parsing fails, return the original string
+    console.error("Error formatting time:", e);
+    return timeString;
+  }
+}

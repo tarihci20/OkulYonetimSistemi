@@ -18,7 +18,10 @@ import {
   LogOut, 
   Menu, 
   UserCog,
-  X
+  X,
+  GraduationCap,
+  BookOpenCheck,
+  Backpack
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";

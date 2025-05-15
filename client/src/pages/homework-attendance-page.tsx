@@ -411,8 +411,8 @@ const HomeworkAttendancePage: React.FC = () => {
       );
     }
     
-    // Sınıf ve isme göre sırala
-    return filtered.sort((a, b) => {
+    // Bu filtrelenmiş öğrenci listesini önce sınıflara göre sırala
+    const sortedByClass = filtered.sort((a, b) => {
       // Önce sınıf adına göre sırala (5/A, 6/B, 7/C)
       const aClass = a.className.split('/')[0];
       const bClass = b.className.split('/')[0];
@@ -421,11 +421,26 @@ const HomeworkAttendancePage: React.FC = () => {
         return parseInt(aClass) - parseInt(bClass);
       }
       
-      // Sonra aynı sınıf içinde öğrenci adına göre sırala
-      const compareResult = a.lastName.localeCompare(b.lastName, 'tr');
+      return 0; // Aynı sınıftaysa değişiklik yapma
+    });
+    
+    // İsim sıralaması için yeni bir sıralama uygula
+    // Aynı sınıftaki öğrencileri soyadına göre sırala
+    return [...sortedByClass].sort((a, b) => {
+      // Farklı sınıftaysa sınıf sıralamasını koru
+      const aClass = a.className.split('/')[0];
+      const bClass = b.className.split('/')[0];
       
-      // Sıralama yönüne göre sonucu çevir
-      return sortDirection === 'asc' ? compareResult : -compareResult;
+      if (aClass !== bClass) {
+        return parseInt(aClass) - parseInt(bClass);
+      }
+      
+      // Aynı sınıfta ise, isme göre sırala (A-Z veya Z-A)
+      if (sortDirection === 'asc') {
+        return a.lastName.localeCompare(b.lastName, 'tr');
+      } else {
+        return b.lastName.localeCompare(a.lastName, 'tr');
+      }
     });
   }, [students, selectedClass, searchQuery, sortDirection]);
   
@@ -437,11 +452,23 @@ const HomeworkAttendancePage: React.FC = () => {
     
     // Sınıflara göre grupla
     classes.forEach(cls => {
-      grouped[cls.name] = filteredStudents.filter(student => student.classId === cls.id);
+      // Her sınıf için öğrencileri filtrele
+      const classStudents = filteredStudents.filter(student => student.classId === cls.id);
+      
+      // Sınıf içinde soyadına göre sırala (A-Z veya Z-A)
+      const sortedClassStudents = [...classStudents].sort((a, b) => {
+        if (sortDirection === 'asc') {
+          return a.lastName.localeCompare(b.lastName, 'tr');
+        } else {
+          return b.lastName.localeCompare(a.lastName, 'tr');
+        }
+      });
+      
+      grouped[cls.name] = sortedClassStudents;
     });
     
     return grouped;
-  }, [filteredStudents, classes]);
+  }, [filteredStudents, classes, sortDirection]);
   
   // Ödev etüdündeki öğrenci sayısını hesapla
   const countHomeworkStudents = (classId?: number): number => {

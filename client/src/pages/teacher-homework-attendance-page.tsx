@@ -124,6 +124,12 @@ const TeacherHomeworkAttendancePage: React.FC = () => {
   const [selectedClass, setSelectedClass] = useState<string>("all");
   const [selectedSessionType, setSelectedSessionType] = useState<string>("all");
   
+  // Şu anki saat bilgisini takip et
+  const [currentTime, setCurrentTime] = useState<string>(() => {
+    const now = new Date();
+    return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+  });
+  
   // Fetch all students
   const { data: students, isLoading: studentsLoading } = useQuery<Student[]>({
     queryKey: ['/api/students'],
@@ -285,6 +291,35 @@ const TeacherHomeworkAttendancePage: React.FC = () => {
     return counts;
   }, [attendanceRecords]);
 
+  // Saati güncellemek için useEffect
+  useEffect(() => {
+    // Her 60 saniyede bir saati güncelle
+    const timeInterval = setInterval(() => {
+      const now = new Date();
+      setCurrentTime(`${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`);
+    }, 60000); // 60 saniyede bir
+    
+    return () => clearInterval(timeInterval);
+  }, []);
+  
+  // Aktif olan etüt oturumlarını bul
+  const activeHomeworkSessions = React.useMemo(() => {
+    if (!homeworkSessions) return [];
+    
+    // Seçilen günün haftanın hangi günü olduğunu kontrol et
+    return homeworkSessions.filter(session => {
+      // Gün kontrolü
+      if (session.dayOfWeek !== dayOfWeek) return false;
+      
+      // Şu an bu etütte miyiz?
+      const isToday = selectedDate === formattedToday;
+      if (!isToday) return false;
+      
+      // Saat aralığı kontrolü
+      return currentTime >= session.startTime && currentTime <= session.endTime;
+    });
+  }, [homeworkSessions, dayOfWeek, selectedDate, formattedToday, currentTime]);
+  
   // Yükleniyor durumu
   if (studentsLoading || classesLoading || sessionsLoading || attendanceLoading) {
     return (
@@ -298,6 +333,26 @@ const TeacherHomeworkAttendancePage: React.FC = () => {
 
   return (
     <DashboardLayout title={`Etüt Durumu - ${formattedDate} ${turkishDayName}`}>
+      {/* Aktif etüt bildirimi */}
+      {activeHomeworkSessions.length > 0 && (
+        <Card className="mb-4 border-green-400 bg-green-50 border-2">
+          <CardContent className="p-4 flex items-center">
+            <div className="bg-green-100 p-2 rounded-full mr-3">
+              <BookOpen className="h-5 w-5 text-green-700" />
+            </div>
+            <div>
+              <h3 className="text-md font-bold text-green-700">
+                Aktif Etüt Zamanı! - {currentTime}
+              </h3>
+              <p className="text-sm text-green-600">
+                Şu anda aktif olan etütler: {' '}
+                {activeHomeworkSessions.map(session => session.name).join(', ')}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    
       <Card className="mb-6">
         <CardHeader>
           <div className="flex justify-between items-center flex-col sm:flex-row">
@@ -309,6 +364,9 @@ const TeacherHomeworkAttendancePage: React.FC = () => {
               <CardDescription>
                 {formattedDate} {turkishDayName} günü etüt durumu ve öğrenci katılımları
               </CardDescription>
+              <div className="mt-1 text-xs font-medium text-muted-foreground">
+                Şu anki saat: {currentTime}
+              </div>
             </div>
             <div className="flex gap-2 mt-4 sm:mt-0">
               <div className="flex items-center">
@@ -381,24 +439,41 @@ const TeacherHomeworkAttendancePage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
             {Object.entries(sessionStudentCounts).map(([sessionType, count]) => {
               const SessionIcon = sessionTypeIcons[sessionType] || BookOpen;
+              // Aktif etüt kontrolü
+              const isActive = activeHomeworkSessions.some(session => {
+                // Burada sessionType ile etüt türü eşleşmesini kontrol etmemiz gerekiyor
+                // Örneğin "homework" sessionType'a sahip yoklama kayıtları, "Ödev Etüdü" adlı sessionlarla ilişkili olabilir
+                if (sessionType === 'homework' && session.name.includes('Ödev')) return true;
+                if (sessionType === 'lesson1' && session.name.includes('1. Ders')) return true;
+                if (sessionType === 'lesson2' && session.name.includes('2. Ders')) return true;
+                if (sessionType === 'sport' && session.name.includes('Spor')) return true;
+                if (sessionType === 'art' && session.name.includes('Sanat')) return true;
+                if (sessionType === 'language' && session.name.includes('Dil')) return true;
+                return false;
+              });
+              
               return (
                 <Card 
                   key={sessionType} 
                   className={cn(
                     "border", 
                     count > 0 ? `border-l-4 ${sessionTypeColors[sessionType].split(' ')[0]}` : "",
-                    selectedSessionType === sessionType ? "ring-2 ring-primary" : ""
+                    selectedSessionType === sessionType ? "ring-2 ring-primary" : "",
+                    isActive ? "border-green-500 shadow-md" : ""
                   )}
                   onClick={() => setSelectedSessionType(sessionType === selectedSessionType ? "all" : sessionType)}
                   role="button"
                 >
                   <CardContent className="p-4 flex items-center">
-                    <div className={cn("p-2 rounded-full mr-3", sessionTypeColors[sessionType].split(' ')[0])}>
-                      <SessionIcon className={cn("h-5 w-5", sessionTypeColors[sessionType].split(' ')[1])} />
+                    <div className={cn("p-2 rounded-full mr-3", 
+                      isActive ? "bg-green-100" : sessionTypeColors[sessionType].split(' ')[0])}>
+                      <SessionIcon className={cn("h-5 w-5", 
+                        isActive ? "text-green-700" : sessionTypeColors[sessionType].split(' ')[1])} />
                     </div>
                     <div>
                       <div className="text-xs font-medium text-muted-foreground">
                         {sessionTypeNames[sessionType]}
+                        {isActive && <span className="ml-1 text-green-600 font-semibold">(Aktif)</span>}
                       </div>
                       <div className="text-xl font-bold">
                         {count} Öğrenci
@@ -410,11 +485,11 @@ const TeacherHomeworkAttendancePage: React.FC = () => {
             })}
           </div>
 
-          <Tabs defaultValue="list">
+          <Tabs defaultValue="session">
             <TabsList className="mb-4">
+              <TabsTrigger value="session">Etüt Görünümü</TabsTrigger>
               <TabsTrigger value="list">Liste Görünümü</TabsTrigger>
               <TabsTrigger value="class">Sınıf Görünümü</TabsTrigger>
-              <TabsTrigger value="session">Etüt Görünümü</TabsTrigger>
             </TabsList>
             
             {/* Liste Görünümü */}

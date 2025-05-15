@@ -99,6 +99,7 @@ const HomeworkAttendancePage: React.FC = () => {
   const [attendanceData, setAttendanceData] = useState<Record<number, Record<string, boolean>>>({});
   const [attendanceStatus, setAttendanceStatus] = useState<Record<number, Record<string, string>>>({});
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc"); // A-Z (asc) veya Z-A (desc) sıralama
+  const [sortKey, setSortKey] = useState<number>(0); // Zorla yeniden render etmek için kullanılan bir anahtar
   
   // Fetch all students
   const { data: students, isLoading: studentsLoading } = useQuery<Student[]>({
@@ -442,7 +443,7 @@ const HomeworkAttendancePage: React.FC = () => {
         return b.lastName.localeCompare(a.lastName, 'tr');
       }
     });
-  }, [students, selectedClass, searchQuery, sortDirection]);
+  }, [students, selectedClass, searchQuery, sortDirection, sortKey]);
   
   // Sınıfa göre öğrenci grupları
   const studentsByClass = React.useMemo(() => {
@@ -468,7 +469,7 @@ const HomeworkAttendancePage: React.FC = () => {
     });
     
     return grouped;
-  }, [filteredStudents, classes, sortDirection]);
+  }, [filteredStudents, classes, sortDirection, sortKey]);
   
   // Ödev etüdündeki öğrenci sayısını hesapla
   const countHomeworkStudents = (classId?: number): number => {
@@ -568,7 +569,11 @@ const HomeworkAttendancePage: React.FC = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setSortDirection(sortDirection === "asc" ? "desc" : "asc")}
+                onClick={() => {
+                  const newDirection = sortDirection === "asc" ? "desc" : "asc";
+                  setSortDirection(newDirection);
+                  setSortKey(prevKey => prevKey + 1); // Zorla yeniden render için
+                }}
                 className="flex items-center whitespace-nowrap"
               >
                 {sortDirection === "asc" ? (

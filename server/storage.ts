@@ -1,6 +1,6 @@
-import { users, teachers, subjects, classes, periods, schedules, dutyLocations, duties, absences, substitutions, extraLessons } from "@shared/schema";
-import type { User, Teacher, Subject, Class, Period, Schedule, DutyLocation, Duty, Absence, Substitution, ExtraLesson } from "@shared/schema";
-import type { InsertUser, InsertTeacher, InsertSubject, InsertClass, InsertPeriod, InsertSchedule, InsertDutyLocation, InsertDuty, InsertAbsence, InsertSubstitution, InsertExtraLesson } from "@shared/schema";
+import { users, teachers, subjects, classes, periods, schedules, dutyLocations, duties, absences, substitutions, extraLessons, students, studentCourses, homeworkSessions, homeworkAttendance } from "@shared/schema";
+import type { User, Teacher, Subject, Class, Period, Schedule, DutyLocation, Duty, Absence, Substitution, ExtraLesson, Student, StudentCourse, HomeworkSession, HomeworkAttendance } from "@shared/schema";
+import type { InsertUser, InsertTeacher, InsertSubject, InsertClass, InsertPeriod, InsertSchedule, InsertDutyLocation, InsertDuty, InsertAbsence, InsertSubstitution, InsertExtraLesson, InsertStudent, InsertStudentCourse, InsertHomeworkSession, InsertHomeworkAttendance } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
 import connectPg from "connect-pg-simple";
@@ -48,6 +48,38 @@ export interface IStorage {
   createPeriod(period: InsertPeriod): Promise<Period>;
   updatePeriod(id: number, period: Partial<InsertPeriod>): Promise<Period | undefined>;
   deletePeriod(id: number): Promise<boolean>;
+  
+  // Student management
+  getAllStudents(): Promise<Student[]>;
+  getStudent(id: number): Promise<Student | undefined>;
+  createStudent(student: InsertStudent): Promise<Student>;
+  updateStudent(id: number, student: Partial<InsertStudent>): Promise<Student | undefined>;
+  deleteStudent(id: number): Promise<boolean>;
+  
+  // Student course management
+  getAllStudentCourses(): Promise<StudentCourse[]>;
+  getStudentCoursesForStudent(studentId: number): Promise<StudentCourse[]>;
+  getStudentCourse(id: number): Promise<StudentCourse | undefined>;
+  createStudentCourse(course: InsertStudentCourse): Promise<StudentCourse>;
+  updateStudentCourse(id: number, course: Partial<InsertStudentCourse>): Promise<StudentCourse | undefined>;
+  deleteStudentCourse(id: number): Promise<boolean>;
+  
+  // Homework session management
+  getAllHomeworkSessions(): Promise<HomeworkSession[]>;
+  getHomeworkSession(id: number): Promise<HomeworkSession | undefined>;
+  createHomeworkSession(session: InsertHomeworkSession): Promise<HomeworkSession>;
+  updateHomeworkSession(id: number, session: Partial<InsertHomeworkSession>): Promise<HomeworkSession | undefined>;
+  deleteHomeworkSession(id: number): Promise<boolean>;
+  
+  // Homework attendance management
+  getAllHomeworkAttendance(): Promise<HomeworkAttendance[]>;
+  getHomeworkAttendanceByDate(date: string): Promise<HomeworkAttendance[]>;
+  getHomeworkAttendanceByStudent(studentId: number): Promise<HomeworkAttendance[]>;
+  getHomeworkAttendance(id: number): Promise<HomeworkAttendance | undefined>;
+  createHomeworkAttendance(attendance: InsertHomeworkAttendance): Promise<HomeworkAttendance>;
+  updateHomeworkAttendance(id: number, attendance: Partial<InsertHomeworkAttendance>): Promise<HomeworkAttendance | undefined>;
+  deleteHomeworkAttendance(id: number): Promise<boolean>;
+  batchCreateOrUpdateHomeworkAttendance(records: InsertHomeworkAttendance[]): Promise<{ created: number, updated: number }>;
   
   // Schedule management
   getAllSchedules(): Promise<Schedule[]>;

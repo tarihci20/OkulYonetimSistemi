@@ -20,6 +20,7 @@ import StudentManagementPage from "@/pages/student-management-page";
 import StudentCoursePage from "@/pages/student-course-page";
 import HomeworkSessionManagementPage from "@/pages/homework-session-management-page";
 import HomeworkAttendancePage from "@/pages/homework-attendance-page";
+import TeacherHomeworkAttendancePage from "@/pages/teacher-homework-attendance-page";
 
 function Router() {
   return (
@@ -35,6 +36,7 @@ function Router() {
       <ProtectedRoute path="/student-courses" component={StudentCoursePage} />
       <ProtectedRoute path="/homework-sessions" component={HomeworkSessionManagementPage} />
       <ProtectedRoute path="/homework-attendance" component={HomeworkAttendancePage} />
+      <ProtectedRoute path="/teacher-homework-attendance" component={TeacherHomeworkAttendancePage} />
       <ProtectedRoute path="/admin" component={AdminPage} />
       <ProtectedRoute path="/admin/:section" component={AdminPage} />
       <Route path="/auth" component={AuthPage} />

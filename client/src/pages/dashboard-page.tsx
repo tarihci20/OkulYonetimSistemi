@@ -54,14 +54,10 @@ const DashboardPage: React.FC = () => {
   const currentPeriod = React.useMemo(() => {
     if (!periodsData || !Array.isArray(periodsData)) return null;
     
-    // Test için 8. dersi manuel olarak ayarla (gerçek saatte çalışacak şekilde kaldırılabilir)
-    // Normalde bu şekilde hesaplanır:
-    // const currentTime = formattedTime;
-    // return periodsData.find((period) => currentTime >= period.startTime && currentTime <= period.endTime);
-    
-    // Test için 8. dersi manuel olarak ayarla
-    return periodsData.find(p => p.order === 8);
-  }, [periodsData]);
+    // Gerçek zamanlı ders tespiti ile mevcut ders saatini bul
+    const currentTime = formattedTime;
+    return periodsData.find((period) => currentTime >= period.startTime && currentTime <= period.endTime);
+  }, [periodsData, formattedTime]);
 
   // Dashboard verilerini çek
   const { data: currentDayData, isLoading } = useQuery<DashboardData>({

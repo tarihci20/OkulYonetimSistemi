@@ -62,9 +62,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Excel dosyası boş veya sadece başlık satırı içeriyor" });
       }
       
-      // Başlık satırını kontrol et
-      const headers = rows[0] as string[];
-      const expectedHeaders = ['Sınıf', 'Okul No', 'Adı Soyadı'];
+      // Başlık satırını kontrol et ve temizle (boşlukları kaldır, büyük harfe çevir)
+      const headers = (rows[0] as string[]).map(header => 
+        typeof header === 'string' ? header.trim().toUpperCase() : String(header).trim().toUpperCase()
+      );
+      
+      const expectedHeaders = ['SINIF', 'OKUL NO', 'ADI SOYADI'];
       const missingHeaders = expectedHeaders.filter(header => !headers.includes(header));
       
       if (missingHeaders.length > 0) {
@@ -74,13 +77,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Sütun indekslerini bul
-      const classIdx = headers.indexOf('Sınıf');
-      const studentNumberIdx = headers.indexOf('Okul No');
-      const fullNameIdx = headers.indexOf('Adı Soyadı');
-      const notesIdx = headers.indexOf('Notlar'); // Opsiyonel
+      const classIdx = headers.indexOf('SINIF');
+      const studentNumberIdx = headers.indexOf('OKUL NO');
+      const fullNameIdx = headers.indexOf('ADI SOYADI');
+      const notesIdx = headers.indexOf('NOTLAR'); // Opsiyonel
       
       // Sınıfları veritabanından al
       const classes = await storage.getAllClasses();
+      
+      // Sınıf isimlerini normalize et (trim ve uppercase)
+      const normalizedClasses = classes.map(c => ({
+        ...c,
+        normalizedName: c.name.trim().toUpperCase()
+      }));
+      
+      console.log("Mevcut sınıflar:", normalizedClasses.map(c => c.normalizedName));
       
       // Öğrencileri içe aktar
       const dataRows = rows.slice(1) as any[];
@@ -99,8 +110,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           
           // Sınıf ID'sini bul
-          const className = row[classIdx].toString().trim();
-          const classObj = classes.find(c => c.name.toUpperCase() === className.toUpperCase());
+          const className = String(row[classIdx]).trim().toUpperCase();
+          console.log(`Excel'deki sınıf adı: "${className}"`);
+          
+          const classObj = normalizedClasses.find(c => c.normalizedName === className);
           
           if (!classObj) {
             results.failed++;
@@ -109,7 +122,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           
           // Ad ve soyadı ayır
-          const fullName = row[fullNameIdx].toString().trim();
+          const fullName = String(row[fullNameIdx]).trim();
           const nameParts = fullName.split(' ');
           
           if (nameParts.length < 2) {
@@ -123,15 +136,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Öğrenci numarası işle
           let studentNumber = null;
-          if (row[studentNumberIdx]) {
-            studentNumber = parseInt(row[studentNumberIdx].toString());
-            if (isNaN(studentNumber)) {
-              studentNumber = null;
+          if (row[studentNumberIdx] !== undefined && row[studentNumberIdx] !== null) {
+            const numValue = String(row[studentNumberIdx]).trim();
+            if (numValue) {
+              studentNumber = parseInt(numValue);
+              if (isNaN(studentNumber)) {
+                studentNumber = null;
+              }
             }
           }
           
           // Notlar
-          const notes = notesIdx !== -1 && row[notesIdx] ? row[notesIdx].toString() : null;
+          const notes = notesIdx !== -1 && row[notesIdx] ? String(row[notesIdx]).trim() : null;
+          
+          console.log(`İçe aktarılıyor: ${firstName} ${lastName}, Sınıf: ${classObj.name} (ID: ${classObj.id})`);
           
           // Öğrenciyi oluştur
           await storage.createStudent({
@@ -144,6 +162,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           results.imported++;
         } catch (error) {
+          console.error("Student import error:", error);
           results.failed++;
           results.errors.push(`Satır ${i+2}: İşleme hatası: ${(error as Error).message}`);
         }
@@ -153,7 +172,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         imported: results.imported,
         failed: results.failed,
-        errors: results.errors
+        errors: results.errors.slice(0, 20) // Sadece ilk 20 hatayı göster
       });
       
     } catch (error) {

@@ -98,6 +98,7 @@ const HomeworkAttendancePage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [attendanceData, setAttendanceData] = useState<Record<number, Record<string, boolean>>>({});
   const [attendanceStatus, setAttendanceStatus] = useState<Record<number, Record<string, string>>>({});
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc"); // A-Z (asc) veya Z-A (desc) sıralama
   
   // Fetch all students
   const { data: students, isLoading: studentsLoading } = useQuery<Student[]>({
@@ -410,7 +411,7 @@ const HomeworkAttendancePage: React.FC = () => {
       );
     }
     
-    // Sınıf numarasına göre sırala
+    // Sınıf ve isme göre sırala
     return filtered.sort((a, b) => {
       // Önce sınıf adına göre sırala (5/A, 6/B, 7/C)
       const aClass = a.className.split('/')[0];
@@ -421,9 +422,12 @@ const HomeworkAttendancePage: React.FC = () => {
       }
       
       // Sonra aynı sınıf içinde öğrenci adına göre sırala
-      return a.lastName.localeCompare(b.lastName);
+      const compareResult = a.lastName.localeCompare(b.lastName, 'tr');
+      
+      // Sıralama yönüne göre sonucu çevir
+      return sortDirection === 'asc' ? compareResult : -compareResult;
     });
-  }, [students, selectedClass, searchQuery]);
+  }, [students, selectedClass, searchQuery, sortDirection]);
   
   // Sınıfa göre öğrenci grupları
   const studentsByClass = React.useMemo(() => {
@@ -514,23 +518,56 @@ const HomeworkAttendancePage: React.FC = () => {
                 />
               </div>
             </div>
-            <div className="md:w-60">
-              <Select value={selectedClass} onValueChange={setSelectedClass}>
-                <SelectTrigger>
-                  <div className="flex items-center">
-                    <Filter className="mr-2 h-4 w-4 text-muted-foreground" />
-                    <SelectValue placeholder="Tüm Sınıflar" />
-                  </div>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tüm Sınıflar</SelectItem>
-                  {classes && classes.map(c => (
-                    <SelectItem key={c.id} value={c.id.toString()}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="flex gap-2">
+              <div className="md:w-60">
+                <Select value={selectedClass} onValueChange={setSelectedClass}>
+                  <SelectTrigger>
+                    <div className="flex items-center">
+                      <Filter className="mr-2 h-4 w-4 text-muted-foreground" />
+                      <SelectValue placeholder="Tüm Sınıflar" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tüm Sınıflar</SelectItem>
+                    {classes && classes.map(c => (
+                      <SelectItem key={c.id} value={c.id.toString()}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSortDirection(sortDirection === "asc" ? "desc" : "asc")}
+                className="flex items-center whitespace-nowrap"
+              >
+                {sortDirection === "asc" ? (
+                  <>
+                    <span>A-Z</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1">
+                      <path d="m3 16 4 4 4-4"></path>
+                      <path d="M7 20V4"></path>
+                      <path d="M11 4h4"></path>
+                      <path d="M11 8h7"></path>
+                      <path d="M11 12h10"></path>
+                    </svg>
+                  </>
+                ) : (
+                  <>
+                    <span>Z-A</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1">
+                      <path d="m3 8 4-4 4 4"></path>
+                      <path d="M7 4v16"></path>
+                      <path d="M11 12h4"></path>
+                      <path d="M11 16h7"></path>
+                      <path d="M11 20h10"></path>
+                    </svg>
+                  </>
+                )}
+              </Button>
             </div>
           </div>
 

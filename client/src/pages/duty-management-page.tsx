@@ -619,14 +619,24 @@ const DutyManagementPage: React.FC = () => {
                               </div>
                             </TableCell>
                             <TableCell className="text-right">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleDeleteDuty(duty.id)}
-                                title="Sil"
-                              >
-                                <Trash className="h-4 w-4 text-destructive" />
-                              </Button>
+                              <div className="flex justify-end space-x-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleEditDuty(duty)}
+                                  title="Düzenle"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleDeleteDuty(duty.id)}
+                                  title="Sil"
+                                >
+                                  <Trash className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))

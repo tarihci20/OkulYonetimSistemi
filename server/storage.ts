@@ -998,6 +998,11 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(duties).where(eq(duties.dayOfWeek, dayOfWeek));
   }
   
+  async getDuty(id: number): Promise<Duty | undefined> {
+    const result = await db.select().from(duties).where(eq(duties.id, id));
+    return result[0];
+  }
+  
   async createDuty(duty: InsertDuty): Promise<Duty> {
     const result = await db.insert(duties).values(duty).returning();
     return result[0];

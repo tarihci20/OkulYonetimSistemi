@@ -602,6 +602,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  app.patch("/api/duties/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Geçersiz ID formatı" });
+      }
+      
+      const validatedData = insertDutySchema.partial().parse(req.body);
+      const updatedDuty = await storage.updateDuty(id, validatedData);
+      
+      if (!updatedDuty) {
+        return res.status(404).json({ message: "Nöbet bulunamadı" });
+      }
+      
+      res.json(updatedDuty);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Geçersiz veri", errors: error.errors });
+      }
+      res.status(500).json({ message: "Nöbet güncellenirken hata oluştu" });
+    }
+  });
+  
+  app.delete("/api/duties/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Geçersiz ID formatı" });
+      }
+      
+      const dutyToDelete = await storage.getDuty(id);
+      if (!dutyToDelete) {
+        return res.status(404).json({ message: "Nöbet bulunamadı" });
+      }
+      
+      // Silme işlemini gerçekleştir
+      await storage.deleteDuty(id);
+      
+      res.status(204).send();
+    } catch (error) {
+      console.error("Nöbet silme hatası:", error);
+      res.status(500).json({ message: "Nöbet silinirken hata oluştu" });
+    }
+  });
+  
   // Absence routes
   app.get("/api/absences", isAuthenticated, async (req, res) => {
     try {

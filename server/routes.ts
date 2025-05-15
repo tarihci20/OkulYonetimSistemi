@@ -35,6 +35,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Öğrenci endpoint'leri
+  app.get("/api/students", isAuthenticated, async (req, res) => {
+    try {
+      const students = await storage.getAllStudents();
+      
+      // Öğrenci listesine sınıf bilgilerini ekle
+      const classes = await storage.getAllClasses();
+      const studentsWithDetails = students.map(student => {
+        const studentClass = classes.find(c => c.id === student.classId);
+        return {
+          ...student,
+          className: studentClass ? studentClass.name : 'Bilinmeyen Sınıf',
+          fullName: `${student.firstName} ${student.lastName}`
+        };
+      });
+      
+      console.log(`Öğrenci listesi döndürülüyor: ${studentsWithDetails.length} öğrenci`);
+      res.json(studentsWithDetails);
+    } catch (error) {
+      console.error("Öğrenci listesi yüklenirken hata:", error);
+      res.status(500).json({ message: "Öğrenci listesi alınırken bir hata oluştu" });
+    }
+  });
+  
   // Excel dosyasından öğrenci içe aktarma endpoint'i
   app.post("/api/students/import", isAuthenticated, upload.single('file'), async (req, res) => {
     try {

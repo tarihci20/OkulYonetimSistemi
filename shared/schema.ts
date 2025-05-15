@@ -164,9 +164,9 @@ export const insertHomeworkSessionSchema = createInsertSchema(homeworkSessions);
 export const homeworkAttendance = pgTable("homework_attendance", {
   id: serial("id").primaryKey(),
   studentId: integer("student_id").notNull(),
+  sessionId: integer("session_id").notNull(),
   date: date("date").notNull(),
-  sessionType: text("session_type").notNull(), // 'homework', 'lesson1', 'lesson2', 'sport', 'art', 'language'
-  present: boolean("present").default(true).notNull(),
+  status: text("status").default("present").notNull(), // 'present', 'absent', 'late', 'excused'
   notes: text("notes"),
 });
 

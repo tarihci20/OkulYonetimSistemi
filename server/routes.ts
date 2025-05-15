@@ -35,6 +35,133 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Excel dosyasından öğrenci içe aktarma endpoint'i
+  app.post("/api/students/import", isAuthenticated, upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "Dosya bulunamadı" });
+      }
+      
+      // Mime type kontrolü yap
+      const allowedTypes = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'];
+      const fileType = req.file.mimetype;
+      
+      if (!allowedTypes.includes(fileType)) {
+        return res.status(400).json({ message: "Sadece Excel dosyaları (.xlsx, .xls) kabul edilir" });
+      }
+      
+      // Excel dosyasını oku
+      const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+      
+      // Excel verilerini JSON'a dönüştür
+      const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[];
+      
+      if (rows.length <= 1) {
+        return res.status(400).json({ message: "Excel dosyası boş veya sadece başlık satırı içeriyor" });
+      }
+      
+      // Başlık satırını kontrol et
+      const headers = rows[0] as string[];
+      const expectedHeaders = ['Sınıf', 'Okul No', 'Adı Soyadı'];
+      const missingHeaders = expectedHeaders.filter(header => !headers.includes(header));
+      
+      if (missingHeaders.length > 0) {
+        return res.status(400).json({ 
+          message: `Excel dosyası gerekli sütunları içermiyor. Eksik sütunlar: ${missingHeaders.join(', ')}` 
+        });
+      }
+      
+      // Sütun indekslerini bul
+      const classIdx = headers.indexOf('Sınıf');
+      const studentNumberIdx = headers.indexOf('Okul No');
+      const fullNameIdx = headers.indexOf('Adı Soyadı');
+      const notesIdx = headers.indexOf('Notlar'); // Opsiyonel
+      
+      // Sınıfları veritabanından al
+      const classes = await storage.getAllClasses();
+      
+      // Öğrencileri içe aktar
+      const dataRows = rows.slice(1) as any[];
+      const results = {
+        imported: 0,
+        failed: 0,
+        errors: [] as string[]
+      };
+      
+      for (const [i, row] of dataRows.entries()) {
+        try {
+          if (!row[classIdx] || !row[fullNameIdx]) {
+            results.failed++;
+            results.errors.push(`Satır ${i+2}: Sınıf veya öğrenci adı boş`);
+            continue;
+          }
+          
+          // Sınıf ID'sini bul
+          const className = row[classIdx].toString().trim();
+          const classObj = classes.find(c => c.name.toUpperCase() === className.toUpperCase());
+          
+          if (!classObj) {
+            results.failed++;
+            results.errors.push(`Satır ${i+2}: Sınıf bulunamadı: "${className}"`);
+            continue;
+          }
+          
+          // Ad ve soyadı ayır
+          const fullName = row[fullNameIdx].toString().trim();
+          const nameParts = fullName.split(' ');
+          
+          if (nameParts.length < 2) {
+            results.failed++;
+            results.errors.push(`Satır ${i+2}: Geçersiz ad soyad formatı: "${fullName}"`);
+            continue;
+          }
+          
+          const lastName = nameParts.pop() || '';
+          const firstName = nameParts.join(' ');
+          
+          // Öğrenci numarası işle
+          let studentNumber = null;
+          if (row[studentNumberIdx]) {
+            studentNumber = parseInt(row[studentNumberIdx].toString());
+            if (isNaN(studentNumber)) {
+              studentNumber = null;
+            }
+          }
+          
+          // Notlar
+          const notes = notesIdx !== -1 && row[notesIdx] ? row[notesIdx].toString() : null;
+          
+          // Öğrenciyi oluştur
+          await storage.createStudent({
+            firstName,
+            lastName,
+            classId: classObj.id,
+            studentNumber,
+            notes
+          });
+          
+          results.imported++;
+        } catch (error) {
+          results.failed++;
+          results.errors.push(`Satır ${i+2}: İşleme hatası: ${(error as Error).message}`);
+        }
+      }
+      
+      // Sonuçları döndür
+      res.json({
+        imported: results.imported,
+        failed: results.failed,
+        errors: results.errors
+      });
+      
+    } catch (error) {
+      console.error("Excel içe aktarma hatası:", error);
+      res.status(500).json({ message: "Excel dosyası işlenirken bir hata oluştu" });
+    }
+  });
+  
   // User routes
   app.get("/api/users", isAdmin, async (req, res) => {
     try {

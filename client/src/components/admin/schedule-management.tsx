@@ -46,7 +46,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { apiRequest, queryClient } from '@/lib/queryClient';
-import { CalendarDays, CalendarRange, Plus, School, User } from 'lucide-react';
+import { CalendarDays, CalendarRange, Plus, School, User, Trash, AlertTriangle } from 'lucide-react';
 
 // Ders programı formunu doğrulama şeması
 const scheduleFormSchema = z.object({

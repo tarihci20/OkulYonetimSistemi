@@ -37,7 +37,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Users, Plus, Pencil, Trash, Upload, Filter, Search } from 'lucide-react';
+import { Users, Plus, Pencil, Trash, Upload, Filter, Search, AlertTriangle } from 'lucide-react';
 
 // Öğrenci tipi
 interface Student {

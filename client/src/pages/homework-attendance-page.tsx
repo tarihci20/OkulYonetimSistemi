@@ -76,6 +76,7 @@ interface HomeworkAttendance {
   date: string;
   sessionType: string;
   present: boolean;
+  status?: string; // 'present', 'absent', 'family_pickup', 'not_at_school'
   notes?: string;
 }
 
@@ -96,6 +97,7 @@ const HomeworkAttendancePage: React.FC = () => {
   const [selectedClass, setSelectedClass] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [attendanceData, setAttendanceData] = useState<Record<number, Record<string, boolean>>>({});
+  const [attendanceStatus, setAttendanceStatus] = useState<Record<number, Record<string, string>>>({});
   
   // Fetch all students
   const { data: students, isLoading: studentsLoading } = useQuery<Student[]>({

@@ -587,6 +587,19 @@ const ScheduleManagement: React.FC = () => {
         </h2>
         
         <div className="flex gap-2">
+          <Button 
+            variant="destructive" 
+            onClick={() => {
+              if (window.confirm('Tüm ders programını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz!')) {
+                deleteAllSchedulesMutation.mutate();
+              }
+            }}
+            disabled={deleteAllSchedulesMutation.isPending}
+          >
+            <Trash className="mr-2 h-4 w-4" />
+            {deleteAllSchedulesMutation.isPending ? 'Siliniyor...' : 'Tüm Programı Sil'}
+          </Button>
+          
           {/* Excel Yükleme Diyaloğu */}
           <Dialog open={isExcelDialogOpen} onOpenChange={setIsExcelDialogOpen}>
             <DialogTrigger asChild>

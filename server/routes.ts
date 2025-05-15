@@ -51,6 +51,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Öğrencileri silerken bir hata oluştu" });
     }
   });
+  
+  // Tüm ders programını silme endpoint'i
+  app.delete("/api/schedules/all", isAdmin, async (req, res) => {
+    try {
+      // SQL kullanarak doğrudan tüm programı sil
+      await db.execute(sql`DELETE FROM schedules WHERE id > 0`);
+      
+      // Verileri yeniden yükle
+      console.log("Tüm ders programı silindi");
+      res.json({ message: "Tüm ders programı başarıyla silindi" });
+    } catch (error) {
+      console.error("Ders programını silerken hata:", error);
+      res.status(500).json({ message: "Ders programını silerken bir hata oluştu" });
+    }
+  });
 
   // Tüm ders programını silme endpoint'i
   app.delete("/api/schedules/all", isAdmin, async (req, res) => {

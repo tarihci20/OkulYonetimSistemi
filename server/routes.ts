@@ -3,6 +3,8 @@ import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
 import { insertTeacherSchema, insertSubjectSchema, insertClassSchema, insertPeriodSchema, insertScheduleSchema, insertDutyLocationSchema, insertDutySchema, insertAbsenceSchema, insertSubstitutionSchema, insertExtraLessonSchema, insertStudentSchema } from "@shared/schema";
+import { db } from "./db";
+import { sql } from "drizzle-orm";
 import { z } from "zod";
 import multer from "multer";
 import * as XLSX from "xlsx";
@@ -32,6 +34,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     storage: multer.memoryStorage(),
     limits: {
       fileSize: 10 * 1024 * 1024, // 10MB limit
+    }
+  });
+  
+  // Tüm öğrencileri silme endpoint'i
+  app.delete("/api/students/all", isAdmin, async (req, res) => {
+    try {
+      // SQL kullanarak doğrudan tüm öğrencileri sil
+      await db.execute(sql`DELETE FROM students WHERE id > 0`);
+      
+      // Verileri yeniden yükle
+      console.log("Tüm öğrenciler silindi");
+      res.json({ message: "Tüm öğrenciler başarıyla silindi" });
+    } catch (error) {
+      console.error("Öğrencileri silerken hata:", error);
+      res.status(500).json({ message: "Öğrencileri silerken bir hata oluştu" });
+    }
+  });
+
+  // Tüm ders programını silme endpoint'i
+  app.delete("/api/schedules/all", isAdmin, async (req, res) => {
+    try {
+      // SQL kullanarak doğrudan tüm programı sil
+      await db.execute(sql`DELETE FROM schedules WHERE id > 0`);
+      
+      // Verileri yeniden yükle
+      console.log("Tüm ders programı silindi");
+      res.json({ message: "Tüm ders programı başarıyla silindi" });
+    } catch (error) {
+      console.error("Ders programını silerken hata:", error);
+      res.status(500).json({ message: "Ders programını silerken bir hata oluştu" });
     }
   });
   

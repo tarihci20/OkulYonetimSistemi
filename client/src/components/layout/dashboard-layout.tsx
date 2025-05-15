@@ -71,6 +71,7 @@ export default function DashboardLayout({ children, title }: DashboardLayoutProp
       if (href === "/student-courses") return "bg-pink-100 text-pink-700";
       if (href === "/homework-sessions") return "bg-cyan-100 text-cyan-700";
       if (href === "/homework-attendance") return "bg-lime-100 text-lime-700";
+      if (href === "/teacher-homework-attendance") return "bg-emerald-100 text-emerald-700";
       if (href.includes("/admin")) return "bg-teal-100 text-teal-700";
       
       // Varsayılan aktif stil
@@ -93,6 +94,7 @@ export default function DashboardLayout({ children, title }: DashboardLayoutProp
     if (href === "/student-courses") return "text-pink-500";
     if (href === "/homework-sessions") return "text-cyan-500";
     if (href === "/homework-attendance") return "text-lime-500";
+    if (href === "/teacher-homework-attendance") return "text-emerald-500";
     if (href.includes("/admin")) return "text-teal-500";
     
     return "";
@@ -181,6 +183,12 @@ export default function DashboardLayout({ children, title }: DashboardLayoutProp
           href: "/homework-attendance",
           icon: <ClipboardList className="w-4 h-4" />,
           isActive: location === "/homework-attendance",
+        },
+        {
+          title: "Etüt Durumu",
+          href: "/teacher-homework-attendance",
+          icon: <BookOpenCheck className="w-4 h-4" />,
+          isActive: location === "/teacher-homework-attendance",
         },
       ],
     },

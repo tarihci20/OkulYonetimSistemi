@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp, boolean, json, time } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, boolean, json, time, date } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -123,6 +123,55 @@ export const extraLessons = pgTable("extra_lessons", {
 
 export const insertExtraLessonSchema = createInsertSchema(extraLessons);
 
+// Öğrenciler tablosu
+export const students = pgTable("students", {
+  id: serial("id").primaryKey(),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+  classId: integer("class_id").notNull(), // 5/A, 6/B, 7/C gibi
+  studentNumber: integer("student_number"), // Öğrenci numarası
+  notes: text("notes"), // Ek notlar
+});
+
+export const insertStudentSchema = createInsertSchema(students);
+
+// Öğrenci kurs bilgileri tablosu
+export const studentCourses = pgTable("student_courses", {
+  id: serial("id").primaryKey(),
+  studentId: integer("student_id").notNull(),
+  courseType: text("course_type").notNull(), // 'sport', 'art', 'language'
+  dayOfWeek: integer("day_of_week").notNull(), // 1-7 (Pazartesi-Pazar)
+  startTime: time("start_time").notNull(),
+  endTime: time("end_time").notNull(),
+  notes: text("notes"),
+});
+
+export const insertStudentCourseSchema = createInsertSchema(studentCourses);
+
+// Etüt programı tablosu
+export const homeworkSessions = pgTable("homework_sessions", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(), // "Ödev Etüdü", "1. Ders Etüdü", "2. Ders Etüdü" vb.
+  dayOfWeek: integer("day_of_week").notNull(), // 1-7 (Pazartesi-Pazar)
+  startTime: time("start_time").notNull(),
+  endTime: time("end_time").notNull(),
+  notes: text("notes"),
+});
+
+export const insertHomeworkSessionSchema = createInsertSchema(homeworkSessions);
+
+// Etüt yoklama tablosu
+export const homeworkAttendance = pgTable("homework_attendance", {
+  id: serial("id").primaryKey(),
+  studentId: integer("student_id").notNull(),
+  date: date("date").notNull(),
+  sessionType: text("session_type").notNull(), // 'homework', 'lesson1', 'lesson2', 'sport', 'art', 'language'
+  present: boolean("present").default(true).notNull(),
+  notes: text("notes"),
+});
+
+export const insertHomeworkAttendanceSchema = createInsertSchema(homeworkAttendance);
+
 // Type definitions
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -156,6 +205,18 @@ export type InsertSubstitution = z.infer<typeof insertSubstitutionSchema>;
 
 export type ExtraLesson = typeof extraLessons.$inferSelect;
 export type InsertExtraLesson = z.infer<typeof insertExtraLessonSchema>;
+
+export type Student = typeof students.$inferSelect;
+export type InsertStudent = z.infer<typeof insertStudentSchema>;
+
+export type StudentCourse = typeof studentCourses.$inferSelect;
+export type InsertStudentCourse = z.infer<typeof insertStudentCourseSchema>;
+
+export type HomeworkSession = typeof homeworkSessions.$inferSelect;
+export type InsertHomeworkSession = z.infer<typeof insertHomeworkSessionSchema>;
+
+export type HomeworkAttendance = typeof homeworkAttendance.$inferSelect;
+export type InsertHomeworkAttendance = z.infer<typeof insertHomeworkAttendanceSchema>;
 
 // Extended schemas with relations for frontend
 export const teacherWithDetailsSchema = z.object({
@@ -239,3 +300,51 @@ export const extraLessonWithDetailsSchema = z.object({
 });
 
 export type ExtraLessonWithDetails = z.infer<typeof extraLessonWithDetailsSchema>;
+
+// Öğrenci ile ilgili genişletilmiş şemalar
+export const studentWithDetailsSchema = z.object({
+  id: z.number(),
+  firstName: z.string(),
+  lastName: z.string(),
+  fullName: z.string(),
+  classId: z.number(),
+  className: z.string(),
+  studentNumber: z.number().optional().nullable(),
+  notes: z.string().optional().nullable(),
+});
+
+export type StudentWithDetails = z.infer<typeof studentWithDetailsSchema>;
+
+export const studentCourseWithDetailsSchema = z.object({
+  id: z.number(),
+  student: studentWithDetailsSchema,
+  courseType: z.string(),
+  dayOfWeek: z.number(),
+  startTime: z.string(),
+  endTime: z.string(),
+  notes: z.string().optional().nullable(),
+});
+
+export type StudentCourseWithDetails = z.infer<typeof studentCourseWithDetailsSchema>;
+
+export const homeworkSessionWithDetailsSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  dayOfWeek: z.number(),
+  startTime: z.string(),
+  endTime: z.string(),
+  notes: z.string().optional().nullable(),
+});
+
+export type HomeworkSessionWithDetails = z.infer<typeof homeworkSessionWithDetailsSchema>;
+
+export const homeworkAttendanceWithDetailsSchema = z.object({
+  id: z.number(),
+  student: studentWithDetailsSchema,
+  date: z.string(),
+  sessionType: z.string(),
+  present: z.boolean(),
+  notes: z.string().optional().nullable(),
+});
+
+export type HomeworkAttendanceWithDetails = z.infer<typeof homeworkAttendanceWithDetailsSchema>;

@@ -1,0 +1,17 @@
+Ödev etüdü yoklama sayfası bu Ön sayfa olarak öğretmenlerin görebileceği bir sayfa olmalı.
+
+Admin paneli Ödev yoklama sayfasında Ödev etüd gün ve saatlerinin girilebileceği bölüm olmalı. Düzenle, ekle ve sil olmalı.
+Öğretmen ödev yoklama sayfasına git linki olmalı 
+
+Admin panelinde önce öğrenciler sayfası eklenmeli. Her öğrenci için Düzenle, ekle ve sil olmalı.
+Excel ile toplu ekleme olmalı. Excelde sütun sırası sınıfı, numarası, adı soyadı şeklinde olmalı. 
+Bu sayfada öğrencinin sınıfı, numarası ve adı soyadı olmalı. Bu sayfada her öğrenci için spor sanat kursu var işaretlenirse günlerin açılacağı bir sayfa açılmalı. Bu sayfada ödev etüt gün ve saatleri açılmalı. Öğrencinin spor, sanat ve dil kursu varsa buraya gün ve saatler işaretlenmeli. Yoklama sayfasında buraya girilen bilgiler otomatik olarak çıkmalı. 
+
+
+Admin panelinde ödev yoklama sayfasında 5 - 6 - 7. Sınıflar alfabetik olarak sıralanmalı. 
+
+Önce 5 ler, altında 6 lar , altında 7 ler şeklinde. Her öğrencinin karşısında 4 tik olmalı.  Ödev etütü, 1. Ders Etüt, 2.ders etüt, spor, sanat, dil kursu şeklinde. Öğrenci detay ekranında o gün için öğrenciye kursu var diye işaretlenmişse otomatik olarak spor, sanat, dil kursu işaretlenmiş olmalı. Bunun dışındaki tüm öğrencilerde ödev etütü tikli olmalı. Eğer öğrenciye 1. Ve 2. Ders Etüt işaretlenmişse ödev etüdünden tik kalkmalı. her öğrenci için 1.ders etüt tiki tek, 2. Ders Etüt tiki tek veya 1 ve 2. Ders Etüt tiki ikisi birden tıklanabilir olmalı. Eğer öğrencinin 1. Veya 2. Ders Etütü yoksa ödev etütünde olmalı. Bunu admin panelinden idareci yapacak. 
+
+Ön sayfa öğretmenlerin görebileceği sayfada ise önce 5 ler, altında 6 lar , altında 7 ler şeklinde. Her öğrencinin karşısında 4 tik olmalı.  Ödev etütü, 1. Ders Etüt, 2.ders etüt, spor, sanat, dil kursu şeklinde. Admin panelinde idarecinin işaretlediği tikler görünmeli. Öğretmen 1.etütde öğrencinin ödev etüdünde mi, ders etüdünde mü olduğunu görebilmeli.
+
+Her sınıfın ödev etüdü toplam öğrenci sayısı ve en alttada tüm sınıfların ödev etüdü öğrenci sayısı çıkmalı. Bu sayıya göre öğretmen yoklamayı almalı. 

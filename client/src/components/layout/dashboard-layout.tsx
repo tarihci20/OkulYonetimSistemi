@@ -67,6 +67,10 @@ export default function DashboardLayout({ children, title }: DashboardLayoutProp
       if (href === "/duty") return "bg-amber-100 text-amber-700";
       if (href === "/absent") return "bg-red-100 text-red-700";
       if (href === "/extra-lesson") return "bg-indigo-100 text-indigo-700";
+      if (href === "/students") return "bg-orange-100 text-orange-700";
+      if (href === "/student-courses") return "bg-pink-100 text-pink-700";
+      if (href === "/homework-sessions") return "bg-cyan-100 text-cyan-700";
+      if (href === "/homework-attendance") return "bg-lime-100 text-lime-700";
       if (href.includes("/admin")) return "bg-teal-100 text-teal-700";
       
       // Varsayılan aktif stil
@@ -85,6 +89,10 @@ export default function DashboardLayout({ children, title }: DashboardLayoutProp
     if (href === "/duty") return "text-amber-500";
     if (href === "/absent") return "text-red-500";
     if (href === "/extra-lesson") return "text-indigo-500";
+    if (href === "/students") return "text-orange-500";
+    if (href === "/student-courses") return "text-pink-500";
+    if (href === "/homework-sessions") return "text-cyan-500";
+    if (href === "/homework-attendance") return "text-lime-500";
     if (href.includes("/admin")) return "text-teal-500";
     
     return "";
@@ -107,7 +115,7 @@ export default function DashboardLayout({ children, title }: DashboardLayoutProp
       ],
     },
     {
-      title: "YÖNETİM PANELİ",
+      title: "DERS VE NÖBET YÖNETİMİ",
       items: [
         {
           title: "Ders Programı",
@@ -145,6 +153,40 @@ export default function DashboardLayout({ children, title }: DashboardLayoutProp
           icon: <PlusCircle className="w-4 h-4" />,
           isActive: location === "/extra-lesson",
         },
+      ],
+    },
+    {
+      title: "ETÜT VE ÖĞRENCİ YÖNETİMİ",
+      items: [
+        {
+          title: "Öğrenci Yönetimi",
+          href: "/students",
+          icon: <GraduationCap className="w-4 h-4" />,
+          isActive: location === "/students",
+        },
+        {
+          title: "Öğrenci Kursları",
+          href: "/student-courses",
+          icon: <Backpack className="w-4 h-4" />,
+          isActive: location === "/student-courses",
+        },
+        {
+          title: "Etüt Programı",
+          href: "/homework-sessions",
+          icon: <BookOpenCheck className="w-4 h-4" />,
+          isActive: location === "/homework-sessions",
+        },
+        {
+          title: "Etüt Yoklama",
+          href: "/homework-attendance",
+          icon: <ClipboardList className="w-4 h-4" />,
+          isActive: location === "/homework-attendance",
+        },
+      ],
+    },
+    {
+      title: "SİSTEM YÖNETİMİ",
+      items: [
         {
           title: "Öğretmenler",
           href: "/admin/teachers",

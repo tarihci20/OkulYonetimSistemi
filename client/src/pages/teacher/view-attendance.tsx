@@ -67,6 +67,7 @@ const ViewAttendancePage: React.FC = () => {
   const [sessionType, setSessionType] = useState<string>('homework');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedClass, setSelectedClass] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<'class' | 'name'>('class'); // 'class' veya 'name' için sıralama seçeneği
   
   // Queries
   const { data: homeworkSessions, isLoading: sessionsLoading } = useQuery<HomeworkSession[]>({
@@ -152,27 +153,29 @@ const ViewAttendancePage: React.FC = () => {
     
     // Yoklama verileri varsa filtreleme yok - tüm öğrencileri göster
     
-    // Öğrencileri alfabetik sırala
+    // Öğrencileri seçilen kritere göre sırala
     return results.sort((a, b) => {
-      // Önce sınıf numarasına göre sırala (eğer varsa)
-      if (a.className && b.className) {
-        const aParts = a.className.split('/');
-        const bParts = b.className.split('/');
-        
-        if (aParts.length > 0 && bParts.length > 0) {
-          const aClassNum = parseInt(aParts[0]);
-          const bClassNum = parseInt(bParts[0]);
+      if (sortBy === 'class') {
+        // Önce sınıf numarasına göre sırala (eğer varsa)
+        if (a.className && b.className) {
+          const aParts = a.className.split('/');
+          const bParts = b.className.split('/');
           
-          if (!isNaN(aClassNum) && !isNaN(bClassNum) && aClassNum !== bClassNum) {
-            return aClassNum - bClassNum;
+          if (aParts.length > 0 && bParts.length > 0) {
+            const aClassNum = parseInt(aParts[0]);
+            const bClassNum = parseInt(bParts[0]);
+            
+            if (!isNaN(aClassNum) && !isNaN(bClassNum) && aClassNum !== bClassNum) {
+              return aClassNum - bClassNum;
+            }
           }
         }
       }
       
-      // Aynı sınıf ise alfabetik sırala
+      // İsme göre alfabetik sırala
       return `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`, 'tr');
     });
-  }, [students, searchQuery, selectedClass]);
+  }, [students, searchQuery, selectedClass, sortBy]);
   
   // Öğrencinin yoklama durumunu bul
   const getAttendanceStatus = (studentId: number): { present: boolean, status: string } => {
@@ -198,16 +201,24 @@ const ViewAttendancePage: React.FC = () => {
     
     const attendanceTypes: string[] = [];
     
+    // Etüt tiplerine göre kaç tane var
+    const hasSport = studentRecords.some(r => r.sessionType === 'sport' && r.present);
+    const hasArt = studentRecords.some(r => r.sessionType === 'art' && r.present);
+    const hasLanguage = studentRecords.some(r => r.sessionType === 'language' && r.present);
+    
+    // Eğer spor, sanat veya dil varsa bunları tek bir etiket olarak göster
+    if (hasSport || hasArt || hasLanguage) {
+      attendanceTypes.push('Spor/Sanat/Dil Kursu');
+    }
+    
+    // Diğer etüt tiplerini ekle
     studentRecords.forEach(record => {
       if (record.sessionType === 'homework') attendanceTypes.push('Ödev Etüdü');
       else if (record.sessionType === 'lesson1') attendanceTypes.push('1. Etüt');
       else if (record.sessionType === 'lesson2') attendanceTypes.push('2. Etüt');
-      else if (record.sessionType === 'sport') attendanceTypes.push('Spor');
-      else if (record.sessionType === 'art') attendanceTypes.push('Sanat');
-      else if (record.sessionType === 'language') attendanceTypes.push('Dil');
     });
     
-    return attendanceTypes;
+    return [...new Set(attendanceTypes)]; // Tekrarlanan değerleri kaldır
   };
   
   // Duruma göre metin renklendirme
@@ -349,8 +360,18 @@ const ViewAttendancePage: React.FC = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-12">No</TableHead>
-                    <TableHead>Öğrenci Adı</TableHead>
-                    <TableHead>Sınıf</TableHead>
+                    <TableHead 
+                      className={`cursor-pointer hover:text-primary ${sortBy === 'name' ? 'font-bold text-primary' : ''}`}
+                      onClick={() => setSortBy('name')}
+                    >
+                      Öğrenci Adı {sortBy === 'name' && '↓'}
+                    </TableHead>
+                    <TableHead 
+                      className={`cursor-pointer hover:text-primary ${sortBy === 'class' ? 'font-bold text-primary' : ''}`}
+                      onClick={() => setSortBy('class')}
+                    >
+                      Sınıf {sortBy === 'class' && '↓'}
+                    </TableHead>
                     <TableHead>Katıldığı Etütler</TableHead>
                   </TableRow>
                 </TableHeader>

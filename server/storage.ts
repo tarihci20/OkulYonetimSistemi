@@ -875,64 +875,72 @@ export class DatabaseStorage implements IStorage {
     let created = 0;
     let updated = 0;
     
-    for (const record of records) {
-      try {
-        console.log("İşlenen kayıt:", record);
-        
-        // client'tan gelen verileri kontrol et
-        if (!record.studentId || !record.date || !record.sessionType) {
-          console.error("Eksik veri:", record);
-          continue;
-        }
-        
-        // Tarih ve gün bilgisini al
-        const date = new Date(record.date);
-        const dayOfWeek = date.getDay() === 0 ? 7 : date.getDay(); // 1-7 (Pazartesi-Pazar)
-        
-        // Session ID'yi belirle
-        let sessionId;
-        
-        // Eğer sessionId zaten belirtilmişse, onu kullan
-        if (record.sessionId) {
-          sessionId = record.sessionId;
-        } else {
-          // Tüm oturumları getir
-          const sessions = await db.select().from(homeworkSessions);
-          console.log("Mevcut oturumlar:", sessions.map(s => `${s.id}: ${s.name} (gün: ${s.dayOfWeek})`));
-          
-          // Session ID yoksa, session type'a ve güne göre bul 
-          // Tam eşleşme yerine içerme kontrolü yapalım (örn: 'homework' vs 'Homework Etüdü')
-          const matchingSession = sessions.find(s => 
-            s.dayOfWeek === dayOfWeek && 
-            (s.name.toLowerCase().includes(record.sessionType.toLowerCase()) || 
-             record.sessionType.toLowerCase().includes(s.name.toLowerCase()))
-          );
-          
-          if (matchingSession) {
-            sessionId = matchingSession.id;
-            console.log(`Eşleşen oturum bulundu: ${matchingSession.id} - ${matchingSession.name}`);
-          } else {
-            // Uygun session bulunamazsa yeni bir session oluştur
-            console.log(`Oturum bulunamadı, yeni oluşturuluyor: ${record.sessionType}, gün: ${dayOfWeek}`);
-            const [newSession] = await db
-              .insert(homeworkSessions)
-              .values({
-                name: record.sessionType,
-                dayOfWeek: dayOfWeek,
-                startTime: "14:00",
-                endTime: "15:30"
-              })
-              .returning();
-            
-            sessionId = newSession.id;
-            console.log(`Yeni oturum oluşturuldu: ${newSession.id} - ${newSession.name}`);
-          }
-        }
-        
-        // Değişiklikleri loglayalım
-        console.log(`Kayıt için session ID: ${sessionId}, öğrenci: ${record.studentId}, tarih: ${record.date}`);
-        
+    // Önce tüm oturumları bir kere getir - bu performans açısından önemli
+    const allSessions = await db.select().from(homeworkSessions);
+    
+    // En fazla 50 kayıt işle - daha büyük listeleri böl
+    const batchSize = 50;
+    const totalBatches = Math.ceil(records.length / batchSize);
+    
+    for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
+      const startIdx = batchIndex * batchSize;
+      const endIdx = Math.min((batchIndex + 1) * batchSize, records.length);
+      const batchRecords = records.slice(startIdx, endIdx);
+      
+      console.log(`İşleniyor: Batch ${batchIndex + 1}/${totalBatches}, ${batchRecords.length} kayıt`);
+      
+      // Paralel işlem için veri hazırla
+      const processPromises = batchRecords.map(async (record) => {
         try {
+          // client'tan gelen verileri kontrol et
+          if (!record.studentId || !record.date || !record.sessionType) {
+            console.error("Eksik veri:", record);
+            return null; 
+          }
+          
+          // Tarih ve gün bilgisini al
+          const date = new Date(record.date);
+          const dayOfWeek = date.getDay() === 0 ? 7 : date.getDay(); // 1-7 (Pazartesi-Pazar)
+          
+          // Session ID'yi belirle
+          let sessionId;
+          
+          // Eğer sessionId zaten belirtilmişse, onu kullan
+          if (record.sessionId) {
+            sessionId = record.sessionId;
+          } else {
+            // Daha önce getirilen oturumlardan uygun olanı bul
+            const matchingSession = allSessions.find(s => 
+              s.dayOfWeek === dayOfWeek && 
+              (s.name.toLowerCase().includes(record.sessionType.toLowerCase()) || 
+               record.sessionType.toLowerCase().includes(s.name.toLowerCase()))
+            );
+            
+            if (matchingSession) {
+              sessionId = matchingSession.id;
+            } else {
+              // Uygun session bulunamazsa yeni bir session oluştur
+              try {
+                const [newSession] = await db
+                  .insert(homeworkSessions)
+                  .values({
+                    name: record.sessionType,
+                    dayOfWeek: dayOfWeek,
+                    startTime: "14:00",
+                    endTime: "15:30"
+                  })
+                  .returning();
+                
+                sessionId = newSession.id;
+                // Yeni oluşturulan oturumu listeye ekle
+                allSessions.push(newSession);
+              } catch (err) {
+                console.error("Yeni oturum oluşturma hatası:", err);
+                return null;
+              }
+            }
+          }
+          
           // Aynı tarih, oturum ve öğrenci için yoklama var mı kontrol et
           const existingAttendances = await db
             .select()
@@ -946,7 +954,6 @@ export class DatabaseStorage implements IStorage {
           const existing = existingAttendances.length > 0 ? existingAttendances[0] : null;
           
           if (existing) {
-            console.log(`Mevcut kayıt güncelleniyor: ID ${existing.id}`);
             // Güncelle
             await db
               .update(homeworkAttendance)
@@ -956,9 +963,8 @@ export class DatabaseStorage implements IStorage {
                 notes: record.notes || null
               })
               .where(eq(homeworkAttendance.id, existing.id));
-            updated++;
+            return { action: 'update' };
           } else {
-            console.log(`Yeni kayıt ekleniyor`);
             // Yeni ekle
             await db
               .insert(homeworkAttendance)
@@ -970,13 +976,23 @@ export class DatabaseStorage implements IStorage {
                 status: record.status || (record.present ? 'present' : 'absent'),
                 notes: record.notes || null
               });
-            created++;
+            return { action: 'create' };
           }
-        } catch (err) {
-          console.error("Yoklama kaydı işlenirken hata:", err);
+        } catch (error) {
+          console.error("Kayıt işlenirken hata:", error);
+          return null;
         }
-      } catch (error) {
-        console.error("Yoklama kaydederken hata:", error);
+      });
+      
+      // Tüm işlemleri paralel çalıştır
+      const results = await Promise.all(processPromises);
+      
+      // Sonuçları say
+      for (const result of results) {
+        if (result) {
+          if (result.action === 'create') created++;
+          if (result.action === 'update') updated++;
+        }
       }
     }
     

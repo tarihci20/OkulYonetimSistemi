@@ -166,6 +166,7 @@ export const homeworkAttendance = pgTable("homework_attendance", {
   studentId: integer("student_id").notNull(),
   sessionId: integer("session_id").notNull(),
   date: date("date").notNull(),
+  present: boolean("present").default(true).notNull(),
   status: text("status").default("present").notNull(), // 'present', 'absent', 'late', 'excused', 'family_pickup', 'not_at_school'
   notes: text("notes"),
 });

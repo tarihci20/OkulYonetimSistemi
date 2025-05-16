@@ -681,138 +681,150 @@ const HomeworkAttendancePage: React.FC = () => {
                       </TableHead>
                       <TableHead className="text-center">
                         <div className="flex flex-col items-center">
-                          <div className="flex justify-between items-center w-full mb-2">
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => selectAll('homework')}
-                              className="text-xs py-1 h-7 mr-1"
-                            >
-                              Tümünü Seç
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => deselectAll('homework')}
-                              className="text-xs py-1 h-7"
-                            >
-                              Tümünü Kaldır
-                            </Button>
+                          <div className="flex items-center justify-center w-full mb-2">
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                id="selectAllHomework"
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    selectAll('homework');
+                                  } else {
+                                    deselectAll('homework');
+                                  }
+                                }}
+                              />
+                              <label 
+                                htmlFor="selectAllHomework" 
+                                className="text-xs cursor-pointer hover:text-primary"
+                              >
+                                Tümünü Seç/Kaldır
+                              </label>
+                            </div>
                           </div>
                           Ödev Etüdü
                         </div>
                       </TableHead>
                       <TableHead className="text-center">
                         <div className="flex flex-col items-center">
-                          <div className="flex justify-between items-center w-full mb-2">
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => selectAll('lesson1')}
-                              className="text-xs py-1 h-7 mr-1"
-                            >
-                              Tümünü Seç
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => deselectAll('lesson1')}
-                              className="text-xs py-1 h-7"
-                            >
-                              Tümünü Kaldır
-                            </Button>
+                          <div className="flex items-center justify-center w-full mb-2">
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                id="selectAllLesson1"
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    selectAll('lesson1');
+                                  } else {
+                                    deselectAll('lesson1');
+                                  }
+                                }}
+                              />
+                              <label 
+                                htmlFor="selectAllLesson1" 
+                                className="text-xs cursor-pointer hover:text-primary"
+                              >
+                                Tümünü Seç/Kaldır
+                              </label>
+                            </div>
                           </div>
                           1. Ders Etüt
                         </div>
                       </TableHead>
                       <TableHead className="text-center">
                         <div className="flex flex-col items-center">
-                          <div className="flex justify-between items-center w-full mb-2">
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => selectAll('lesson2')}
-                              className="text-xs py-1 h-7 mr-1"
-                            >
-                              Tümünü Seç
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => deselectAll('lesson2')}
-                              className="text-xs py-1 h-7"
-                            >
-                              Tümünü Kaldır
-                            </Button>
+                          <div className="flex items-center justify-center w-full mb-2">
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                id="selectAllLesson2"
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    selectAll('lesson2');
+                                  } else {
+                                    deselectAll('lesson2');
+                                  }
+                                }}
+                              />
+                              <label 
+                                htmlFor="selectAllLesson2" 
+                                className="text-xs cursor-pointer hover:text-primary"
+                              >
+                                Tümünü Seç/Kaldır
+                              </label>
+                            </div>
                           </div>
                           2. Ders Etüt
                         </div>
                       </TableHead>
                       <TableHead className="text-center">
                         <div className="flex flex-col items-center">
-                          <div className="flex justify-between items-center w-full mb-2">
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => selectAll('sport')}
-                              className="text-xs py-1 h-7 mr-1"
-                            >
-                              Tümünü Seç
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => deselectAll('sport')}
-                              className="text-xs py-1 h-7"
-                            >
-                              Tümünü Kaldır
-                            </Button>
+                          <div className="flex items-center justify-center w-full mb-2">
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                id="selectAllSport"
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    selectAll('sport');
+                                  } else {
+                                    deselectAll('sport');
+                                  }
+                                }}
+                              />
+                              <label 
+                                htmlFor="selectAllSport" 
+                                className="text-xs cursor-pointer hover:text-primary"
+                              >
+                                Tümünü Seç/Kaldır
+                              </label>
+                            </div>
                           </div>
                           Spor Kursu
                         </div>
                       </TableHead>
                       <TableHead className="text-center">
                         <div className="flex flex-col items-center">
-                          <div className="flex justify-between items-center w-full mb-2">
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => selectAll('art')}
-                              className="text-xs py-1 h-7 mr-1"
-                            >
-                              Tümünü Seç
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => deselectAll('art')}
-                              className="text-xs py-1 h-7"
-                            >
-                              Tümünü Kaldır
-                            </Button>
+                          <div className="flex items-center justify-center w-full mb-2">
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                id="selectAllArt"
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    selectAll('art');
+                                  } else {
+                                    deselectAll('art');
+                                  }
+                                }}
+                              />
+                              <label 
+                                htmlFor="selectAllArt" 
+                                className="text-xs cursor-pointer hover:text-primary"
+                              >
+                                Tümünü Seç/Kaldır
+                              </label>
+                            </div>
                           </div>
                           Sanat Kursu
                         </div>
                       </TableHead>
                       <TableHead className="text-center">
                         <div className="flex flex-col items-center">
-                          <div className="flex justify-between items-center w-full mb-2">
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => selectAll('language')}
-                              className="text-xs py-1 h-7 mr-1"
-                            >
-                              Tümünü Seç
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => deselectAll('language')}
-                              className="text-xs py-1 h-7"
-                            >
-                              Tümünü Kaldır
-                            </Button>
+                          <div className="flex items-center justify-center w-full mb-2">
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                id="selectAllLanguage"
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    selectAll('language');
+                                  } else {
+                                    deselectAll('language');
+                                  }
+                                }}
+                              />
+                              <label 
+                                htmlFor="selectAllLanguage" 
+                                className="text-xs cursor-pointer hover:text-primary"
+                              >
+                                Tümünü Seç/Kaldır
+                              </label>
+                            </div>
                           </div>
                           Dil Kursu
                         </div>

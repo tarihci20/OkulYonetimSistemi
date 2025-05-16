@@ -100,7 +100,7 @@ const HomeworkAttendancePage: React.FC = () => {
   const [attendanceStatus, setAttendanceStatus] = useState<Record<number, Record<string, string>>>({});
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc"); // A-Z (asc) veya Z-A (desc) sıralama
   const [sortKey, setSortKey] = useState<number>(0); // Zorla yeniden render etmek için kullanılan bir anahtar
-  const [sortColumn, setSortColumn] = useState<string>("lastName"); // Sıralama yapılan sütun
+  const [sortColumn, setSortColumn] = useState<string>("fullName"); // Sıralama yapılan sütun, varsayılan olarak ad soyada göre
   
   // Fetch all students
   const { data: students, isLoading: studentsLoading } = useQuery<Student[]>({
@@ -757,24 +757,7 @@ const HomeworkAttendancePage: React.FC = () => {
                       <TableHead className="text-center">
                         <div className="flex flex-col items-center">
                           <div className="flex items-center justify-center w-full mb-2">
-                            <div className="flex items-center space-x-2">
-                              <Checkbox
-                                id="selectAllSport"
-                                onCheckedChange={(checked) => {
-                                  if (checked) {
-                                    selectAll('sport');
-                                  } else {
-                                    deselectAll('sport');
-                                  }
-                                }}
-                              />
-                              <label 
-                                htmlFor="selectAllSport" 
-                                className="text-xs cursor-pointer hover:text-primary"
-                              >
-                                Tümünü Seç/Kaldır
-                              </label>
-                            </div>
+                            {/* Spor kursu için tümünü seç/kaldır kontrolü kaldırıldı */}
                           </div>
                           Spor Kursu
                         </div>
@@ -782,24 +765,7 @@ const HomeworkAttendancePage: React.FC = () => {
                       <TableHead className="text-center">
                         <div className="flex flex-col items-center">
                           <div className="flex items-center justify-center w-full mb-2">
-                            <div className="flex items-center space-x-2">
-                              <Checkbox
-                                id="selectAllArt"
-                                onCheckedChange={(checked) => {
-                                  if (checked) {
-                                    selectAll('art');
-                                  } else {
-                                    deselectAll('art');
-                                  }
-                                }}
-                              />
-                              <label 
-                                htmlFor="selectAllArt" 
-                                className="text-xs cursor-pointer hover:text-primary"
-                              >
-                                Tümünü Seç/Kaldır
-                              </label>
-                            </div>
+                            {/* Sanat kursu için tümünü seç/kaldır kontrolü kaldırıldı */}
                           </div>
                           Sanat Kursu
                         </div>
@@ -807,24 +773,7 @@ const HomeworkAttendancePage: React.FC = () => {
                       <TableHead className="text-center">
                         <div className="flex flex-col items-center">
                           <div className="flex items-center justify-center w-full mb-2">
-                            <div className="flex items-center space-x-2">
-                              <Checkbox
-                                id="selectAllLanguage"
-                                onCheckedChange={(checked) => {
-                                  if (checked) {
-                                    selectAll('language');
-                                  } else {
-                                    deselectAll('language');
-                                  }
-                                }}
-                              />
-                              <label 
-                                htmlFor="selectAllLanguage" 
-                                className="text-xs cursor-pointer hover:text-primary"
-                              >
-                                Tümünü Seç/Kaldır
-                              </label>
-                            </div>
+                            {/* Dil kursu için tümünü seç/kaldır kontrolü kaldırıldı */}
                           </div>
                           Dil Kursu
                         </div>

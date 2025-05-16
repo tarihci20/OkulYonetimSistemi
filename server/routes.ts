@@ -19,10 +19,26 @@ const isAuthenticated = (req: any, res: any, next: any) => {
 
 // Middleware to check if user is admin
 const isAdmin = (req: any, res: any, next: any) => {
-  if (req.isAuthenticated() && req.user.isAdmin) {
+  if (req.isAuthenticated() && (req.user.isAdmin || req.user.role === 'admin')) {
     return next();
   }
   res.status(403).json({ message: "Yönetici yetkisi gerekiyor" });
+};
+
+// Middleware to check if user is a manager (Müdür Yardımcısı)
+const isManager = (req: any, res: any, next: any) => {
+  if (req.isAuthenticated() && (req.user.role === 'manager' || req.user.isAdmin || req.user.role === 'admin')) {
+    return next();
+  }
+  res.status(403).json({ message: "Müdür yardımcısı yetkisi gerekiyor" });
+};
+
+// Middleware to check if user is a teacher
+const isTeacher = (req: any, res: any, next: any) => {
+  if (req.isAuthenticated() && (req.user.role === 'teacher' || req.user.role === 'manager' || req.user.isAdmin || req.user.role === 'admin')) {
+    return next();
+  }
+  res.status(403).json({ message: "Öğretmen yetkisi gerekiyor" });
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -1219,6 +1235,121 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Gelişmiş nöbet verileri hatası:", error);
       res.status(500).json({ message: "Gelişmiş nöbet verileri alınırken hata oluştu" });
+    }
+  });
+  
+  // Öğretmen paneli - Bugünün etüt öğrencileri
+  app.get("/api/teacher/students-for-session", isTeacher, async (req, res) => {
+    try {
+      const { sessionType, date } = req.query;
+      
+      if (!sessionType || !date) {
+        return res.status(400).json({ message: "Oturum türü ve tarih belirtilmelidir." });
+      }
+      
+      const dateObj = new Date(date as string);
+      const dayOfWeek = dateObj.getDay() === 0 ? 7 : dateObj.getDay(); // 1-7 (Pazartesi-Pazar)
+      
+      // @ts-ignore - user.teacherId olup olmadığını kontrol et
+      const teacherId = req.user.teacherId;
+      
+      // İlgili etüt türüne göre öğrencileri bul
+      let students = [];
+      
+      // Eğer ödev etüdü ise yemekhane öğretmeni sadece ödev etüdü öğrencilerini görür
+      if (sessionType === 'homework') {
+        // Bugün ödev etüdüne gelecek öğrencileri getir
+        const allStudents = await storage.getAllStudents();
+        
+        // Student kurslarını getir
+        const studentCourses = await storage.getAllStudentCourses();
+        
+        // Bu gün için kursu olmayan öğrencileri filtrele
+        students = allStudents.filter(student => {
+          // Bu öğrencinin bugün kursu var mı kontrol et
+          const hasCourseToday = studentCourses.some(
+            course => course.studentId === student.id && course.dayOfWeek === dayOfWeek
+          );
+          
+          // Kursu yoksa ödev etüdüne gelecek
+          return !hasCourseToday;
+        });
+      }
+      // Kurs ise, o kursa kayıtlı öğrencileri getir
+      else if (sessionType === 'sport' || sessionType === 'art' || sessionType === 'language') {
+        const studentCourses = await storage.getAllStudentCourses();
+        const allStudents = await storage.getAllStudents();
+        
+        // Bugün bu kurs türüne kayıtlı öğrencileri filtrele
+        const courseStudentIds = studentCourses
+          .filter(course => 
+            course.courseType === sessionType && 
+            course.dayOfWeek === dayOfWeek)
+          .map(course => course.studentId);
+        
+        students = allStudents.filter(student => courseStudentIds.includes(student.id));
+      }
+      // Diğer etütler için (1. Etüt, 2. Etüt)
+      else {
+        // Sınıfta yapılan etütler için öğrencileri getir
+        const allStudents = await storage.getAllStudents();
+        
+        // Student kurslarını getir
+        const studentCourses = await storage.getAllStudentCourses();
+        
+        // Bu gün için kursu olmayan ve belirli etüte atanmış öğrencileri filtrele
+        students = allStudents.filter(student => {
+          // Bu öğrencinin bugün kursu var mı kontrol et
+          const hasCourseToday = studentCourses.some(
+            course => course.studentId === student.id && course.dayOfWeek === dayOfWeek
+          );
+          
+          // Kursu yoksa etüte gelebilir
+          return !hasCourseToday;
+        });
+      }
+      
+      res.json(students);
+    } catch (error) {
+      console.error("Öğretmen etüt öğrencileri alınırken hata:", error);
+      res.status(500).json({ message: "Öğrenciler alınırken bir hata oluştu" });
+    }
+  });
+  
+  // Öğretmen paneli - Etüt yoklaması kaydetme
+  app.post("/api/teacher/attendance", isTeacher, async (req, res) => {
+    try {
+      const { studentIds, sessionType, date, present, status } = req.body;
+      
+      if (!studentIds || !Array.isArray(studentIds) || !sessionType || !date) {
+        return res.status(400).json({ 
+          message: "Geçersiz veri. Öğrenci ID'leri, oturum türü ve tarih gereklidir."
+        });
+      }
+      
+      // @ts-ignore - user.teacherId olup olmadığını kontrol et
+      const teacherId = req.user.teacherId;
+      
+      // Batch işlemi için kayıtları hazırla
+      const records = studentIds.map(studentId => ({
+        studentId,
+        sessionType,
+        date,
+        present: !!present,
+        status: status || (present ? 'present' : 'absent')
+      }));
+      
+      // Toplu güncelleme
+      const result = await storage.batchCreateOrUpdateHomeworkAttendance(records);
+      
+      res.json({
+        message: "Yoklama başarıyla kaydedildi",
+        created: result.created,
+        updated: result.updated
+      });
+    } catch (error) {
+      console.error("Öğretmen yoklaması kaydedilirken hata:", error);
+      res.status(500).json({ message: "Yoklama kaydedilirken bir hata oluştu" });
     }
   });
   

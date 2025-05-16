@@ -143,12 +143,12 @@ const TeacherPanel: React.FC = () => {
   const currentSession = getCurrentSessionInfo();
   
   if (userLoading) {
-    return <DashboardLayout>Kullanıcı bilgileri yükleniyor...</DashboardLayout>;
+    return <DashboardLayout title="Öğretmen Paneli">Kullanıcı bilgileri yükleniyor...</DashboardLayout>;
   }
   
   if (!currentUser || !currentUser.teacherId) {
     return (
-      <DashboardLayout>
+      <DashboardLayout title="Erişim Hatası">
         <Card className="w-full">
           <CardHeader>
             <CardTitle>Erişim Hatası</CardTitle>
@@ -167,7 +167,7 @@ const TeacherPanel: React.FC = () => {
   }
   
   return (
-    <DashboardLayout>
+    <DashboardLayout title="Öğretmen Paneli">
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Öğretmen Yoklama Paneli</h1>

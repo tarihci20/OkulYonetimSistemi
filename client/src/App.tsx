@@ -23,9 +23,15 @@ import HomeworkAttendancePage from "@/pages/homework-attendance-page";
 import TeacherHomeworkAttendancePage from "@/pages/teacher-homework-attendance-page";
 import TeacherPanel from "@/pages/teacher-panel";
 
+// Öğretmen Paneli Sayfaları (Bağımsız)
+import TeacherHomePage from "@/pages/teacher";
+import TeacherAttendancePage from "@/pages/teacher/attendance";
+import TeacherStudentsPage from "@/pages/teacher/students";
+
 function Router() {
   return (
     <Switch>
+      {/* Yönetici Paneli Sayfaları - Korumalı */}
       <ProtectedRoute path="/" component={DashboardPage} />
       <ProtectedRoute path="/schedule" component={TeacherSchedulePage} />
       <ProtectedRoute path="/schedule-management" component={ScheduleManagementPage} />
@@ -41,6 +47,13 @@ function Router() {
       <ProtectedRoute path="/teacher-panel" component={TeacherPanel} />
       <ProtectedRoute path="/admin" component={AdminPage} />
       <ProtectedRoute path="/admin/:section" component={AdminPage} />
+      
+      {/* Öğretmen Paneli Sayfaları - Doğrudan Erişilebilir */}
+      <Route path="/teacher" component={TeacherHomePage} />
+      <Route path="/teacher/attendance" component={TeacherAttendancePage} />
+      <Route path="/teacher/students" component={TeacherStudentsPage} />
+      
+      {/* Diğer Sayfalar */}
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>

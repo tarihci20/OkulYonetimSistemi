@@ -757,25 +757,30 @@ const HomeworkAttendancePage: React.FC = () => {
                       <TableHead className="text-center">
                         <div className="flex flex-col items-center">
                           <div className="flex items-center justify-center w-full mb-2">
-                            {/* Spor kursu için tümünü seç/kaldır kontrolü kaldırıldı */}
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                id="selectAllSpecialty"
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    selectAll('sport');
+                                    selectAll('art');
+                                    selectAll('language');
+                                  } else {
+                                    deselectAll('sport');
+                                    deselectAll('art');
+                                    deselectAll('language');
+                                  }
+                                }}
+                              />
+                              <label 
+                                htmlFor="selectAllSpecialty" 
+                                className="text-xs cursor-pointer hover:text-primary"
+                              >
+                                Tümünü Seç/Kaldır
+                              </label>
+                            </div>
                           </div>
-                          Spor Kursu
-                        </div>
-                      </TableHead>
-                      <TableHead className="text-center">
-                        <div className="flex flex-col items-center">
-                          <div className="flex items-center justify-center w-full mb-2">
-                            {/* Sanat kursu için tümünü seç/kaldır kontrolü kaldırıldı */}
-                          </div>
-                          Sanat Kursu
-                        </div>
-                      </TableHead>
-                      <TableHead className="text-center">
-                        <div className="flex flex-col items-center">
-                          <div className="flex items-center justify-center w-full mb-2">
-                            {/* Dil kursu için tümünü seç/kaldır kontrolü kaldırıldı */}
-                          </div>
-                          Dil Kursu
+                          Spor/Sanat/Dil Kursu
                         </div>
                       </TableHead>
                     </TableRow>
@@ -874,83 +879,81 @@ const HomeworkAttendancePage: React.FC = () => {
                             </div>
                           </TableCell>
                           
-                          {/* Spor Kursu */}
+                          {/* Spor/Sanat/Dil Kursu */}
                           <TableCell className="text-center">
                             <div className="flex flex-col items-center">
-                              <Checkbox
-                                checked={attendanceData[student.id]?.['sport'] || false}
-                                onCheckedChange={() => toggleAttendance(student.id, 'sport')}
-                                className={cn("mx-auto mb-1", 
-                                  hasStudentCourse(student.id, 'sport', dayOfWeek) ? "bg-amber-100" : ""
+                              <div className="flex space-x-2 mb-1 gap-1">
+                                {/* Spor kursu */}
+                                {hasStudentCourse(student.id, 'sport', dayOfWeek) && (
+                                  <div className="flex flex-col items-center">
+                                    <Checkbox
+                                      checked={attendanceData[student.id]?.['sport'] || false}
+                                      onCheckedChange={() => toggleAttendance(student.id, 'sport')}
+                                      className={cn("mx-auto mb-1", 
+                                        hasStudentCourse(student.id, 'sport', dayOfWeek) ? "bg-amber-100" : ""
+                                      )}
+                                    />
+                                    <span className="text-xs">Spor</span>
+                                  </div>
                                 )}
-                                disabled={!hasStudentCourse(student.id, 'sport', dayOfWeek)}
-                              />
-                              {attendanceData[student.id]?.['sport'] && hasStudentCourse(student.id, 'sport', dayOfWeek) && (
-                                <Select
-                                  value={attendanceStatus[student.id]?.['sport'] || 'present'}
-                                  onValueChange={(value) => setStudentStatus(student.id, 'sport', value)}
-                                >
-                                  <SelectTrigger className="h-7 w-28 text-xs">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {statusOptions.map(option => (
-                                      <SelectItem key={option.value} value={option.value}>
-                                        {option.label}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              )}
-                            </div>
-                          </TableCell>
-                          
-                          {/* Sanat Kursu */}
-                          <TableCell className="text-center">
-                            <div className="flex flex-col items-center">
-                              <Checkbox
-                                checked={attendanceData[student.id]?.['art'] || false}
-                                onCheckedChange={() => toggleAttendance(student.id, 'art')}
-                                className={cn("mx-auto mb-1", 
-                                  hasStudentCourse(student.id, 'art', dayOfWeek) ? "bg-amber-100" : ""
+                                
+                                {/* Sanat kursu */}
+                                {hasStudentCourse(student.id, 'art', dayOfWeek) && (
+                                  <div className="flex flex-col items-center">
+                                    <Checkbox
+                                      checked={attendanceData[student.id]?.['art'] || false}
+                                      onCheckedChange={() => toggleAttendance(student.id, 'art')}
+                                      className={cn("mx-auto mb-1", 
+                                        hasStudentCourse(student.id, 'art', dayOfWeek) ? "bg-amber-100" : ""
+                                      )}
+                                    />
+                                    <span className="text-xs">Sanat</span>
+                                  </div>
                                 )}
-                                disabled={!hasStudentCourse(student.id, 'art', dayOfWeek)}
-                              />
-                              {attendanceData[student.id]?.['art'] && hasStudentCourse(student.id, 'art', dayOfWeek) && (
-                                <Select
-                                  value={attendanceStatus[student.id]?.['art'] || 'present'}
-                                  onValueChange={(value) => setStudentStatus(student.id, 'art', value)}
-                                >
-                                  <SelectTrigger className="h-7 w-28 text-xs">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {statusOptions.map(option => (
-                                      <SelectItem key={option.value} value={option.value}>
-                                        {option.label}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              )}
-                            </div>
-                          </TableCell>
-                          
-                          {/* Dil Kursu */}
-                          <TableCell className="text-center">
-                            <div className="flex flex-col items-center">
-                              <Checkbox
-                                checked={attendanceData[student.id]?.['language'] || false}
-                                onCheckedChange={() => toggleAttendance(student.id, 'language')}
-                                className={cn("mx-auto mb-1", 
-                                  hasStudentCourse(student.id, 'language', dayOfWeek) ? "bg-amber-100" : ""
+                                
+                                {/* Dil kursu */}
+                                {hasStudentCourse(student.id, 'language', dayOfWeek) && (
+                                  <div className="flex flex-col items-center">
+                                    <Checkbox
+                                      checked={attendanceData[student.id]?.['language'] || false}
+                                      onCheckedChange={() => toggleAttendance(student.id, 'language')}
+                                      className={cn("mx-auto mb-1", 
+                                        hasStudentCourse(student.id, 'language', dayOfWeek) ? "bg-amber-100" : ""
+                                      )}
+                                    />
+                                    <span className="text-xs">Dil</span>
+                                  </div>
                                 )}
-                                disabled={!hasStudentCourse(student.id, 'language', dayOfWeek)}
-                              />
-                              {attendanceData[student.id]?.['language'] && hasStudentCourse(student.id, 'language', dayOfWeek) && (
+                                
+                                {!hasStudentCourse(student.id, 'sport', dayOfWeek) && 
+                                 !hasStudentCourse(student.id, 'art', dayOfWeek) && 
+                                 !hasStudentCourse(student.id, 'language', dayOfWeek) && (
+                                  <span className="text-xs text-gray-400">Kursa kayıtlı değil</span>
+                                )}
+                              </div>
+                              
+                              {/* Durum seçici - herhangi bir kurs seçiliyse göster */}
+                              {(attendanceData[student.id]?.['sport'] || 
+                                attendanceData[student.id]?.['art'] || 
+                                attendanceData[student.id]?.['language']) && (
                                 <Select
-                                  value={attendanceStatus[student.id]?.['language'] || 'present'}
-                                  onValueChange={(value) => setStudentStatus(student.id, 'language', value)}
+                                  value={
+                                    attendanceStatus[student.id]?.['sport'] || 
+                                    attendanceStatus[student.id]?.['art'] || 
+                                    attendanceStatus[student.id]?.['language'] || 
+                                    'present'
+                                  }
+                                  onValueChange={(value) => {
+                                    if (attendanceData[student.id]?.['sport']) {
+                                      setStudentStatus(student.id, 'sport', value);
+                                    }
+                                    if (attendanceData[student.id]?.['art']) {
+                                      setStudentStatus(student.id, 'art', value);
+                                    }
+                                    if (attendanceData[student.id]?.['language']) {
+                                      setStudentStatus(student.id, 'language', value);
+                                    }
+                                  }}
                                 >
                                   <SelectTrigger className="h-7 w-28 text-xs">
                                     <SelectValue />

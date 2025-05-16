@@ -100,6 +100,7 @@ const HomeworkAttendancePage: React.FC = () => {
   const [attendanceStatus, setAttendanceStatus] = useState<Record<number, Record<string, string>>>({});
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc"); // A-Z (asc) veya Z-A (desc) sıralama
   const [sortKey, setSortKey] = useState<number>(0); // Zorla yeniden render etmek için kullanılan bir anahtar
+  const [sortColumn, setSortColumn] = useState<string>("lastName"); // Sıralama yapılan sütun
   
   // Fetch all students
   const { data: students, isLoading: studentsLoading } = useQuery<Student[]>({
@@ -412,35 +413,50 @@ const HomeworkAttendancePage: React.FC = () => {
       );
     }
     
-    // Bu filtrelenmiş öğrenci listesini önce sınıflara göre sırala
-    const sortedByClass = filtered.sort((a, b) => {
-      // Önce sınıf adına göre sırala (5/A, 6/B, 7/C)
-      const aClass = a.className.split('/')[0];
-      const bClass = b.className.split('/')[0];
-      
-      if (aClass !== bClass) {
-        return parseInt(aClass) - parseInt(bClass);
+    // Filtrelenmiş öğrencileri seçilen sütuna göre sırala
+    return [...filtered].sort((a, b) => {
+      // Önce sınıf düzeyine göre sırala
+      if (sortColumn === 'className') {
+        const aClass = a.className.split('/')[0];
+        const bClass = b.className.split('/')[0];
+        
+        if (aClass !== bClass) {
+          return sortDirection === 'asc' 
+            ? parseInt(aClass) - parseInt(bClass)
+            : parseInt(bClass) - parseInt(aClass);
+        }
+        
+        // Aynı sınıf düzeyinde ise, sınıf harfine göre sırala
+        const aSubClass = a.className.split('/')[1];
+        const bSubClass = b.className.split('/')[1];
+        
+        return sortDirection === 'asc'
+          ? aSubClass.localeCompare(bSubClass, 'tr')
+          : bSubClass.localeCompare(aSubClass, 'tr');
+      } 
+      // Öğrenci adına göre sırala
+      else if (sortColumn === 'fullName') {
+        const aFullName = a.fullName || `${a.firstName} ${a.lastName}`;
+        const bFullName = b.fullName || `${b.firstName} ${b.lastName}`;
+        
+        return sortDirection === 'asc'
+          ? aFullName.localeCompare(bFullName, 'tr')
+          : bFullName.localeCompare(aFullName, 'tr');
       }
-      
-      return 0; // Aynı sınıftaysa değişiklik yapma
-    });
-    
-    // İsim sıralaması için yeni bir sıralama uygula
-    // Aynı sınıftaki öğrencileri soyadına göre sırala
-    return [...sortedByClass].sort((a, b) => {
-      // Farklı sınıftaysa sınıf sıralamasını koru
-      const aClass = a.className.split('/')[0];
-      const bClass = b.className.split('/')[0];
-      
-      if (aClass !== bClass) {
-        return parseInt(aClass) - parseInt(bClass);
-      }
-      
-      // Aynı sınıfta ise, isme göre sırala (A-Z veya Z-A)
-      if (sortDirection === 'asc') {
-        return a.lastName.localeCompare(b.lastName, 'tr');
-      } else {
-        return b.lastName.localeCompare(a.lastName, 'tr');
+      // Varsayılan olarak soyadına göre sırala (aynı zamanda sınıf düzeyini de dikkate al)
+      else {
+        // Farklı sınıf düzeyinde ise, önce sınıf düzeyine göre sırala
+        const aClass = parseInt(a.className.split('/')[0]);
+        const bClass = parseInt(b.className.split('/')[0]);
+        
+        if (aClass !== bClass) {
+          return aClass - bClass;
+        }
+        
+        // Aynı sınıfta ise, soyadına göre sırala
+        return sortDirection === 'asc'
+          ? a.lastName.localeCompare(b.lastName, 'tr')
+          : b.lastName.localeCompare(a.lastName, 'tr');
       }
     });
   }, [students, selectedClass, searchQuery, sortDirection, sortKey]);

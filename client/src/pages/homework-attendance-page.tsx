@@ -1119,6 +1119,12 @@ const HomeworkAttendancePage: React.FC = () => {
             </span>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" asChild>
+              <a href="/teacher-panel">
+                <Users className="mr-2 h-4 w-4" />
+                Öğretmen Etüt Yoklama Sayfası
+              </a>
+            </Button>
             <Button variant="outline">
               <Download className="mr-2 h-4 w-4" />
               Rapor İndir

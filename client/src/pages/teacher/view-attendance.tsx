@@ -80,13 +80,12 @@ const ViewAttendancePage: React.FC = () => {
   
   // Yoklama kayıtları
   const { data: attendanceRecords, isLoading: attendanceLoading } = useQuery<Attendance[]>({
-    queryKey: ['/api/teacher/attendance', sessionType, formattedISODate],
-    enabled: !!sessionType && !!formattedISODate,
+    queryKey: ['/api/public/attendance-records', { date: formattedISODate }],
   });
   
   // Tüm sınıfları elde etme
   const { data: classes, isLoading: classesLoading } = useQuery<{id: number, name: string}[]>({
-    queryKey: ['/api/classes'],
+    queryKey: ['/api/teacher/classes'],
   });
   
   // Mevcut oturum bilgisi

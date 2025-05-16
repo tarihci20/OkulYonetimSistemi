@@ -1509,6 +1509,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Tüm sınıfları getir - sessionless (öğretmen paneli için)
+  app.get("/api/teacher/classes", async (req, res) => {
+    try {
+      const classes = await storage.getAllClasses();
+      res.json(classes);
+    } catch (error) {
+      console.error("Sınıflar alınırken hata:", error);
+      res.status(500).json({ message: "Sınıflar alınamadı" });
+    }
+  });
+  
+  // Yoklama kayıtlarını alma - özel endpoint, tüm yoklama kayıtlarını döndürür
+  app.get("/api/public/attendance-records", async (req, res) => {
+    try {
+      const { date } = req.query;
+      
+      if (!date) {
+        const today = new Date();
+        // Bugünün tarihini yyyy-MM-dd formatında al
+        const formattedDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        const allRecords = await storage.getHomeworkAttendanceByDate(formattedDate);
+        return res.json(allRecords);
+      }
+      
+      const allRecords = await storage.getHomeworkAttendanceByDate(date as string);
+      res.json(allRecords);
+    } catch (error) {
+      console.error("Yoklama kayıtları alınırken hata:", error);
+      res.status(500).json({ message: "Yoklama kayıtları alınamadı" });
+    }
+  });
+  
   // Create HTTP server
   const httpServer = createServer(app);
   return httpServer;

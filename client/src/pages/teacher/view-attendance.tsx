@@ -188,6 +188,28 @@ const ViewAttendancePage: React.FC = () => {
     return { present: record.present, status: record.status };
   };
   
+  // Öğrencinin hangi etütlere katıldığını bul
+  const getStudentAttendances = (studentId: number): string[] => {
+    if (!attendanceRecords) return [];
+    
+    const studentRecords = attendanceRecords.filter(record => 
+      record.studentId === studentId && record.present === true
+    );
+    
+    const attendanceTypes: string[] = [];
+    
+    studentRecords.forEach(record => {
+      if (record.sessionType === 'homework') attendanceTypes.push('Ödev Etüdü');
+      else if (record.sessionType === 'lesson1') attendanceTypes.push('1. Etüt');
+      else if (record.sessionType === 'lesson2') attendanceTypes.push('2. Etüt');
+      else if (record.sessionType === 'sport') attendanceTypes.push('Spor');
+      else if (record.sessionType === 'art') attendanceTypes.push('Sanat');
+      else if (record.sessionType === 'language') attendanceTypes.push('Dil');
+    });
+    
+    return attendanceTypes;
+  };
+  
   // Duruma göre metin renklendirme
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -329,21 +351,36 @@ const ViewAttendancePage: React.FC = () => {
                     <TableHead className="w-12">No</TableHead>
                     <TableHead>Öğrenci Adı</TableHead>
                     <TableHead>Sınıf</TableHead>
-                    <TableHead>Durum</TableHead>
+                    <TableHead>Katıldığı Etütler</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredStudents.map((student, index) => {
                     const { present, status } = getAttendanceStatus(student.id);
+                    const attendanceTypes = getStudentAttendances(student.id);
+                    
                     return (
                       <TableRow key={student.id}>
                         <TableCell>{index+1}</TableCell>
                         <TableCell>{student.fullName || `${student.firstName} ${student.lastName}`}</TableCell>
-                        <TableCell>{student.className}</TableCell>
+                        <TableCell>{student.className || "-"}</TableCell>
                         <TableCell>
-                          <Badge className={`${getStatusColor(status)}`}>
-                            {getStatusText(status)}
-                          </Badge>
+                          {attendanceTypes.length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                              {attendanceTypes.map((type, idx) => (
+                                <Badge 
+                                  key={idx}
+                                  className="bg-green-100 text-green-800 border-green-300"
+                                >
+                                  {type}
+                                </Badge>
+                              ))}
+                            </div>
+                          ) : (
+                            <Badge className="bg-red-100 text-red-800 border-red-300">
+                              Etüt Yok
+                            </Badge>
+                          )}
                         </TableCell>
                       </TableRow>
                     );

@@ -631,8 +631,54 @@ const HomeworkAttendancePage: React.FC = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-12">No</TableHead>
-                      <TableHead>Öğrenci</TableHead>
-                      <TableHead>Sınıf</TableHead>
+                      <TableHead>
+                        <button 
+                          onClick={() => {
+                            // Eğer zaten bu sütundan sıralama yapılıyorsa sadece yönü değiştir
+                            if (sortColumn === 'fullName') {
+                              setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+                            } else {
+                              // Yeni bir sütundan sıralama yapılıyorsa, sütunu değiştir ve varsayılan olarak A-Z (asc) yönünde sırala
+                              setSortColumn('fullName');
+                              setSortDirection('asc');
+                            }
+                            // Zorla yeniden render
+                            setSortKey(prev => prev + 1);
+                          }}
+                          className="flex items-center hover:text-primary transition-colors"
+                        >
+                          Öğrenci
+                          {sortColumn === 'fullName' && (
+                            <span className="ml-1">
+                              {sortDirection === 'asc' ? '↓' : '↑'}
+                            </span>
+                          )}
+                        </button>
+                      </TableHead>
+                      <TableHead>
+                        <button 
+                          onClick={() => {
+                            // Eğer zaten bu sütundan sıralama yapılıyorsa sadece yönü değiştir
+                            if (sortColumn === 'className') {
+                              setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+                            } else {
+                              // Yeni bir sütundan sıralama yapılıyorsa, sütunu değiştir ve varsayılan olarak A-Z (asc) yönünde sırala
+                              setSortColumn('className');
+                              setSortDirection('asc');
+                            }
+                            // Zorla yeniden render
+                            setSortKey(prev => prev + 1);
+                          }}
+                          className="flex items-center hover:text-primary transition-colors"
+                        >
+                          Sınıf
+                          {sortColumn === 'className' && (
+                            <span className="ml-1">
+                              {sortDirection === 'asc' ? '↓' : '↑'}
+                            </span>
+                          )}
+                        </button>
+                      </TableHead>
                       <TableHead className="text-center">
                         <div className="flex flex-col items-center">
                           <div className="flex justify-between items-center w-full mb-2">

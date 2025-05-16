@@ -27,6 +27,7 @@ import TeacherPanel from "@/pages/teacher-panel";
 import TeacherHomePage from "@/pages/teacher";
 import TeacherAttendancePage from "@/pages/teacher/attendance";
 import TeacherStudentsPage from "@/pages/teacher/students";
+import ViewAttendancePage from "@/pages/teacher/view-attendance";
 
 function Router() {
   return (
@@ -52,6 +53,7 @@ function Router() {
       <Route path="/teacher" component={TeacherHomePage} />
       <Route path="/teacher/attendance" component={TeacherAttendancePage} />
       <Route path="/teacher/students" component={TeacherStudentsPage} />
+      <Route path="/teacher/view" component={ViewAttendancePage} />
       
       {/* Diğer Sayfalar */}
       <Route path="/auth" component={AuthPage} />

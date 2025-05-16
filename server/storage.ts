@@ -871,34 +871,91 @@ export class DatabaseStorage implements IStorage {
     }
   }
   
-  async batchCreateOrUpdateHomeworkAttendance(records: InsertHomeworkAttendance[]): Promise<{ created: number, updated: number }> {
+  async batchCreateOrUpdateHomeworkAttendance(records: any[]): Promise<{ created: number, updated: number }> {
     let created = 0;
     let updated = 0;
     
     for (const record of records) {
-      // Aynı oturum ve öğrenci için yoklama var mı kontrol et
-      const [existing] = await db
-        .select()
-        .from(homeworkAttendance)
-        .where(and(
-          eq(homeworkAttendance.sessionId, record.sessionId),
-          eq(homeworkAttendance.studentId, record.studentId)
-        ));
-      
-      if (existing) {
-        // Güncelle
-        await db
-          .update(homeworkAttendance)
-          .set({
-            status: record.status, 
-            notes: record.notes
-          })
-          .where(eq(homeworkAttendance.id, existing.id));
-        updated++;
-      } else {
-        // Yeni ekle
-        await db.insert(homeworkAttendance).values(record);
-        created++;
+      try {
+        // client'tan gelen verileri kontrol et
+        if (!record.studentId || !record.date || !record.sessionType) {
+          console.error("Eksik veri:", record);
+          continue;
+        }
+        
+        // Tarih ve gün bilgisini al
+        const date = new Date(record.date);
+        const dayOfWeek = date.getDay() === 0 ? 7 : date.getDay(); // 1-7 (Pazartesi-Pazar)
+        
+        // Session ID'yi belirle
+        let sessionId;
+        
+        // Eğer sessionId zaten belirtilmişse, onu kullan
+        if (record.sessionId) {
+          sessionId = record.sessionId;
+        } else {
+          // Session ID yoksa, session type'a ve güne göre bul
+          const [session] = await db
+            .select()
+            .from(homeworkSessions)
+            .where(and(
+              eq(homeworkSessions.name, record.sessionType),
+              eq(homeworkSessions.dayOfWeek, dayOfWeek)
+            ));
+          
+          if (session) {
+            sessionId = session.id;
+          } else {
+            // Uygun session bulunamazsa yeni bir session oluştur
+            const [newSession] = await db
+              .insert(homeworkSessions)
+              .values({
+                name: record.sessionType,
+                dayOfWeek: dayOfWeek,
+                startTime: "14:00",
+                endTime: "15:30"
+              })
+              .returning();
+            
+            sessionId = newSession.id;
+          }
+        }
+        
+        // Aynı tarih, sessionType ve öğrenci için yoklama var mı kontrol et
+        const [existing] = await db
+          .select()
+          .from(homeworkAttendance)
+          .where(and(
+            eq(homeworkAttendance.date, record.date),
+            eq(homeworkAttendance.studentId, record.studentId),
+            eq(homeworkAttendance.sessionId, sessionId)
+          ));
+        
+        if (existing) {
+          // Güncelle
+          await db
+            .update(homeworkAttendance)
+            .set({
+              present: record.present,
+              status: record.status,
+              notes: record.notes || null
+            })
+            .where(eq(homeworkAttendance.id, existing.id));
+          updated++;
+        } else {
+          // Yeni ekle
+          await db.insert(homeworkAttendance).values({
+            studentId: record.studentId,
+            date: record.date,
+            sessionId: sessionId,
+            present: record.present,
+            status: record.status,
+            notes: record.notes || null
+          });
+          created++;
+        }
+      } catch (error) {
+        console.error("Yoklama kaydederken hata:", error);
       }
     }
     

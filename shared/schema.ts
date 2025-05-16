@@ -7,9 +7,11 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
-  isAdmin: boolean("is_admin").default(false).notNull(),
+  role: text("role").default("teacher").notNull(), // "admin", "manager", "teacher"
+  isAdmin: boolean("is_admin").default(false).notNull(), // Eski sürüm uyumluluğu için
   fullName: text("full_name"),
   lastLogin: timestamp("last_login"),
+  teacherId: integer("teacher_id"), // İlişkili öğretmen kaydı (sadece öğretmenler için)
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -17,6 +19,8 @@ export const insertUserSchema = createInsertSchema(users).pick({
   password: true,
   fullName: true,
   isAdmin: true,
+  role: true,
+  teacherId: true,
 });
 
 // Öğretmenler tablosu

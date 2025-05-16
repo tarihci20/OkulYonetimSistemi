@@ -1,0 +1,83 @@
+**Vildan Koleji Etüt-Kurs-Yoklama Takip Sistemi Teknik Şartnamesi**
+
+**1. Genel Amaç:**
+Okulda öğrencilerin ödev etüdü, ders etüdü, spor/sanat/dil kursları gibi ders dışı etkinliklerinin etkili takibi ve yoklamasını sağlamak.
+
+---
+
+**2. Kullanıcı Rolleri:**
+
+**A. Admin (Okul Yöneticisi / Sistem Sorumlusu)**
+
+* Tüm verilere erişim ve yetki.
+* Raporlama ve veri indirme.
+
+**B. Müdür Yardımcısı**
+
+* Haftalık olarak öğrencilerin etkinlik planlarını belirler.
+* Kurs ataması yapar (yıl başında sabitlenir).
+* Etüt planlaması yapar (günlük ya da haftalık).
+
+**C. Öğretmen (Yoklama Alacak Olanlar)**
+
+* Günlük olarak kendi sorumlu oldukları grubun yoklamasını alır.
+* Yemekhane öğretmeni sadece ödev etüdüne gelenleri görür.
+
+---
+
+**3. Etkinlik Türleri:**
+
+* Ödev Etüdü (Yemekhanede)
+* 1. Etüt (Sınıflarda)
+* 2. Etüt (Sınıflarda)
+* Spor/Sanat/Dil Kursları (Kurs listesine göre salonlarda)
+
+---
+
+**4. Sistem Kuralları:**
+
+1. Sene başında her öğrenciye kurs planı girilir (gün bazlı).
+2. Kurs planı olan günlerde ilgili öğrenciye **etüt atanamaz**.
+3. Müdür yardımcısı, kurs günü olmayan öğrencilere:
+
+   * Ödev etüdü
+   * 1. Etüt
+   * 2. Etüt ataması yapabilir.
+4. Sistem otomatik olarak **günlük yoklama listesi** oluşturur:
+
+   * Her öğrencinin o gün hangi etkinlikte olacağı gözükür.
+5. Öğretmen panelinde, sadece ilgili etkinliğe gelen öğrenciler gözükür.
+6. Yoklama alınırken "bulunamadı" olarak işaretlenenler sistem tarafından raporlanır.
+
+---
+
+**5. Teknik Yapı ve Modüller:**
+
+* **Kullanıcı Girişi:** Rol bazlı panel yönlendirmesi.
+* **Öğrenci Veri Tabanı:** Ad, soyad, sınıf, kurs günleri.
+* **Planlama Paneli (Müdür Yardımcısı):** Haftalık/günlük plan.
+* **Yoklama Paneli (Her Öğretmen İçin Ayrı Ayrı):** Sadece o günün listesi.
+* **Raporlama Modülü:** Yoklama durumu, eksikler, devamsızlık.
+
+---
+
+**6. Teknik Öneriler (Geliştirici İçin):**
+
+* **Frontend:** React.js (Admin, Müdür Yard., Öğretmen)
+* **Backend:** Node.js veya Python FastAPI
+* **Veri Tabanı:** PostgreSQL veya Firebase
+* **Kullanıcı Doğrulama:** Firebase Auth veya JWT
+* **Barındırma:** Vercel/Netlify (frontend), Railway/Render (backend)
+
+---
+
+**7. Ekstra Gereksinimler:**
+
+* Mobil uyumlu arayüz.
+* Excel veya PDF dışa aktarım.
+* Otomatik gün başı plan yayını.
+* Görevli öğretmene SMS veya bildirim desteği (isteğe bağlı).
+
+---
+
+**Not:** Sistemin hem geliştirilebilir hem de yalın işleyişli olması hedeflenmelidir. Dilerseniz çizim ve ekran tasarımları da ayrı olarak iletilebilir.

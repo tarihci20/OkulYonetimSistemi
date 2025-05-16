@@ -52,7 +52,7 @@ const TeacherStudentsPage: React.FC = () => {
   
   // Queries
   const { data: currentUser, isLoading: userLoading } = useQuery<User>({
-    queryKey: ['/api/auth/user'],
+    queryKey: ['/api/teacher/auth/user'],
   });
   
   const { data: students, isLoading: studentsLoading } = useQuery<Student[]>({
@@ -61,7 +61,7 @@ const TeacherStudentsPage: React.FC = () => {
   });
   
   const { data: studentCourses, isLoading: coursesLoading } = useQuery<StudentCourse[]>({
-    queryKey: ['/api/student-courses'],
+    queryKey: ['/api/teacher/student-courses'],
   });
   
   // Öğrenci kurslarını bul

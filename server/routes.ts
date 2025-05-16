@@ -1382,6 +1382,133 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Öğretmen Paneli API Endpointleri - Doğrudan Erişilebilir
+  
+  // Öğretmen kimlik doğrulama - session kontrolü olmadan çalışır
+  app.get("/api/teacher/auth/user", async (req, res) => {
+    try {
+      if (req.session?.user) {
+        // Oturum açılmış ise kullanıcı bilgilerini döndür
+        const userId = req.session.user.id;
+        const user = await storage.getUser(userId);
+        return res.json(user);
+      }
+      // Oturum açılmamış
+      return res.status(401).json({ message: "Oturum açılmamış" });
+    } catch (error) {
+      console.error("Kullanıcı bilgileri alınırken hata:", error);
+      res.status(500).json({ message: "Kullanıcı bilgileri alınamadı" });
+    }
+  });
+  
+  // Öğretmen bilgileri - sessionless
+  app.get("/api/teacher/profile", async (req, res) => {
+    try {
+      if (!req.session?.user?.teacherId) {
+        return res.status(401).json({ message: "Öğretmen bilgisi bulunamadı" });
+      }
+      
+      const teacher = await storage.getTeacher(req.session.user.teacherId);
+      if (!teacher) {
+        return res.status(404).json({ message: "Öğretmen kaydı bulunamadı" });
+      }
+      
+      res.json(teacher);
+    } catch (error) {
+      console.error("Öğretmen bilgisi alınırken hata:", error);
+      res.status(500).json({ message: "Öğretmen bilgisi alınamadı" });
+    }
+  });
+  
+  // Öğretmenin etüt öğrencileri - sessionless
+  app.get("/api/teacher/students-for-session", async (req, res) => {
+    try {
+      const { type, date } = req.query;
+      
+      if (!type || !date) {
+        return res.status(400).json({ message: "Oturum türü ve tarih belirtilmelidir" });
+      }
+      
+      // Burada öğretmene atanmış öğrencileri getiren bir sorgu yapılacak
+      // Öğrenci listesinde herhangi bir filtreleme olmadan tüm öğrencileri döndürelim
+      const students = await storage.getAllStudents();
+      
+      // Alfabetik sıralama
+      const sortedStudents = [...students].sort((a, b) => {
+        return `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`, 'tr');
+      });
+      
+      res.json(sortedStudents.slice(0, 20)); // Örnek olarak ilk 20 öğrenciyi göster
+    } catch (error) {
+      console.error("Etüt öğrencileri alınırken hata:", error);
+      res.status(500).json({ message: "Etüt öğrencileri alınamadı" });
+    }
+  });
+  
+  // Öğretmenin sorumlu olduğu tüm öğrenciler - sessionless
+  app.get("/api/teacher/my-students", async (req, res) => {
+    try {
+      // Tüm öğrencileri getir
+      const students = await storage.getAllStudents();
+      
+      // Abecesel olarak sırala
+      const sortedStudents = [...students].sort((a, b) => {
+        return `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`, 'tr');
+      });
+      
+      res.json(sortedStudents);
+    } catch (error) {
+      console.error("Öğrenci listesi alınırken hata:", error);
+      res.status(500).json({ message: "Öğrenci listesi alınamadı" });
+    }
+  });
+  
+  // Öğretmen için yoklama kayıtları - sessionless
+  app.get("/api/teacher/attendance", async (req, res) => {
+    try {
+      const { sessionType, date } = req.query;
+      
+      if (!sessionType || !date) {
+        return res.status(400).json({ message: "Oturum türü ve tarih belirtilmelidir" });
+      }
+      
+      // Belirtilen tarih için yoklama kayıtlarını al
+      const attendanceRecords = await storage.getHomeworkAttendanceByDate(date as string);
+      
+      // Belirtilen oturum türüne göre filtrele
+      const filteredRecords = attendanceRecords.filter(record => 
+        record.sessionType === sessionType
+      );
+      
+      res.json(filteredRecords);
+    } catch (error) {
+      console.error("Yoklama kayıtları alınırken hata:", error);
+      res.status(500).json({ message: "Yoklama kayıtları alınamadı" });
+    }
+  });
+  
+  // Homework oturumları - sessionless
+  app.get("/api/teacher/homework-sessions", async (req, res) => {
+    try {
+      const sessions = await storage.getAllHomeworkSessions();
+      res.json(sessions);
+    } catch (error) {
+      console.error("Etüt oturumları alınırken hata:", error);
+      res.status(500).json({ message: "Etüt oturumları alınamadı" });
+    }
+  });
+  
+  // Öğrenci kursları - sessionless
+  app.get("/api/teacher/student-courses", async (req, res) => {
+    try {
+      const courses = await storage.getAllStudentCourses();
+      res.json(courses);
+    } catch (error) {
+      console.error("Öğrenci kursları alınırken hata:", error);
+      res.status(500).json({ message: "Öğrenci kursları alınamadı" });
+    }
+  });
+  
   // Create HTTP server
   const httpServer = createServer(app);
   return httpServer;

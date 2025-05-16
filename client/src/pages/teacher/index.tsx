@@ -38,11 +38,11 @@ const TeacherHomePage: React.FC = () => {
   
   // Queries
   const { data: currentUser, isLoading: userLoading } = useQuery<User>({
-    queryKey: ['/api/auth/user'],
+    queryKey: ['/api/teacher/auth/user'],
   });
   
   const { data: teacherData, isLoading: teacherLoading } = useQuery<Teacher>({
-    queryKey: ['/api/teachers/me'],
+    queryKey: ['/api/teacher/profile'],
     enabled: !!currentUser?.teacherId,
   });
   

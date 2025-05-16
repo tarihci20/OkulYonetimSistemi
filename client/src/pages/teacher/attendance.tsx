@@ -81,11 +81,11 @@ const TeacherAttendancePage: React.FC = () => {
   
   // Queries
   const { data: currentUser, isLoading: userLoading } = useQuery<User>({
-    queryKey: ['/api/auth/user'],
+    queryKey: ['/api/teacher/auth/user'],
   });
   
   const { data: homeworkSessions, isLoading: sessionsLoading } = useQuery<HomeworkSession[]>({
-    queryKey: ['/api/homework-sessions'],
+    queryKey: ['/api/teacher/homework-sessions'],
   });
   
   // Öğretmenin sorumlu olduğu etüt öğrencileri
@@ -99,11 +99,13 @@ const TeacherAttendancePage: React.FC = () => {
     queryKey: ['/api/teacher/attendance', sessionType, formattedISODate],
     enabled: !!sessionType && !!formattedISODate,
     onSuccess: (data) => {
+      if (!data) return;
+      
       // Yoklama verilerini state'e yükle
       const presentMap: Record<number, boolean> = {};
       const statusMap: Record<number, string> = {};
       
-      data?.forEach(record => {
+      data.forEach((record) => {
         presentMap[record.studentId] = record.present;
         statusMap[record.studentId] = record.status;
       });

@@ -1120,7 +1120,7 @@ const HomeworkAttendancePage: React.FC = () => {
           </div>
           <div className="flex gap-2">
             <Button variant="outline" asChild>
-              <a href="/teacher-panel">
+              <a href="/teacher/attendance" target="_blank">
                 <Users className="mr-2 h-4 w-4" />
                 Öğretmen Etüt Yoklama Sayfası
               </a>

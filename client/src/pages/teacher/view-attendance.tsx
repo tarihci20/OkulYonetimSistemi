@@ -131,7 +131,7 @@ const ViewAttendancePage: React.FC = () => {
   
   // Filtreleme ve arama
   const filteredStudents = React.useMemo(() => {
-    if (!students || !attendanceRecords) return [];
+    if (!students) return [];
     
     let results = [...students];
     
@@ -146,31 +146,41 @@ const ViewAttendancePage: React.FC = () => {
       results = results.filter(student => 
         `${student.firstName} ${student.lastName}`.toLowerCase().includes(query) ||
         (student.fullName && student.fullName.toLowerCase().includes(query)) ||
-        student.className.toLowerCase().includes(query)
+        student.className?.toLowerCase().includes(query)
       );
     }
     
+    // Yoklama verileri varsa filtreleme yok - tüm öğrencileri göster
+    
     // Öğrencileri alfabetik sırala
     return results.sort((a, b) => {
-      // Önce sınıf numarasına göre sırala
-      const aClassNum = parseInt(a.className.split('/')[0]);
-      const bClassNum = parseInt(b.className.split('/')[0]);
-      
-      if (aClassNum !== bClassNum) {
-        return aClassNum - bClassNum;
+      // Önce sınıf numarasına göre sırala (eğer varsa)
+      if (a.className && b.className) {
+        const aParts = a.className.split('/');
+        const bParts = b.className.split('/');
+        
+        if (aParts.length > 0 && bParts.length > 0) {
+          const aClassNum = parseInt(aParts[0]);
+          const bClassNum = parseInt(bParts[0]);
+          
+          if (!isNaN(aClassNum) && !isNaN(bClassNum) && aClassNum !== bClassNum) {
+            return aClassNum - bClassNum;
+          }
+        }
       }
       
       // Aynı sınıf ise alfabetik sırala
       return `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`, 'tr');
     });
-  }, [students, attendanceRecords, searchQuery, selectedClass]);
+  }, [students, searchQuery, selectedClass]);
   
   // Öğrencinin yoklama durumunu bul
   const getAttendanceStatus = (studentId: number): { present: boolean, status: string } => {
     if (!attendanceRecords) return { present: false, status: 'absent' };
     
     const record = attendanceRecords.find(a => 
-      a.studentId === studentId && a.sessionType === sessionType
+      a.studentId === studentId && 
+      (a.sessionType === sessionType || a.sessionType?.toLowerCase() === sessionType?.toLowerCase())
     );
     
     if (!record) return { present: false, status: 'absent' };
@@ -273,13 +283,13 @@ const ViewAttendancePage: React.FC = () => {
           {/* Etüt Türü Seçimi */}
           <div className="p-4 border-b">
             <Tabs defaultValue="homework" onValueChange={setSessionType}>
-              <TabsList className="grid grid-cols-6 w-full">
-                <TabsTrigger value="homework">Ödev Etüdü</TabsTrigger>
-                <TabsTrigger value="lesson1">1. Ders Etüdü</TabsTrigger>
-                <TabsTrigger value="lesson2">2. Ders Etüdü</TabsTrigger>
-                <TabsTrigger value="sport">Spor</TabsTrigger>
-                <TabsTrigger value="art">Sanat</TabsTrigger>
-                <TabsTrigger value="language">Dil</TabsTrigger>
+              <TabsList className="grid grid-cols-3 md:grid-cols-6 w-full">
+                <TabsTrigger value="homework" className="text-xs md:text-sm">Ödev Etüdü</TabsTrigger>
+                <TabsTrigger value="lesson1" className="text-xs md:text-sm">1. Etüt</TabsTrigger>
+                <TabsTrigger value="lesson2" className="text-xs md:text-sm">2. Etüt</TabsTrigger>
+                <TabsTrigger value="sport" className="text-xs md:text-sm">Spor</TabsTrigger>
+                <TabsTrigger value="art" className="text-xs md:text-sm">Sanat</TabsTrigger>
+                <TabsTrigger value="language" className="text-xs md:text-sm">Dil</TabsTrigger>
               </TabsList>
             </Tabs>
           </div>

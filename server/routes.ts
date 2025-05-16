@@ -1228,46 +1228,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Gelen veriyi kontrol et
       const { records } = req.body;
       
+      console.log("Gelen yoklama kaydı verileri:", JSON.stringify(req.body));
+      
       if (!records || !Array.isArray(records)) {
         return res.status(400).json({ message: "Geçersiz veri formatı. 'records' dizisi gerekli." });
       }
       
-      // İlgili oturumu bul ve session_id'yi ekle
-      for (let i = 0; i < records.length; i++) {
-        const record = records[i];
-        if (!record.date || !record.sessionType || record.studentId === undefined) {
-          return res.status(400).json({ 
-            message: "Eksik veri: Her kayıt için date, sessionType ve studentId gerekli.",
-            invalidRecord: record
-          });
-        }
-        
-        // Oturum türüne göre ilgili oturumu bul
-        const date = new Date(record.date);
-        const dayOfWeek = date.getDay() === 0 ? 7 : date.getDay(); // 1-7 (Pazartesi-Pazar)
-        
-        const sessions = await storage.getAllHomeworkSessions();
-        const matchingSession = sessions.find(s => 
-          s.dayOfWeek === dayOfWeek && s.name.toLowerCase() === record.sessionType.toLowerCase()
-        );
-        
-        if (matchingSession) {
-          // Oturum bulundu, ID'yi kaydediyoruz
-          records[i].sessionId = matchingSession.id;
-        } else {
-          // Oturum bulunamadı, yeni bir oturum oluştur
-          const newSession = await storage.createHomeworkSession({
-            name: record.sessionType,
-            dayOfWeek: dayOfWeek,
-            startTime: "14:00",
-            endTime: "15:30"
-          });
-          
-          records[i].sessionId = newSession.id;
-        }
-      }
+      console.log(`İşlenecek toplam kayıt sayısı: ${records.length}`);
       
-      // Toplu işlem yap
+      // Toplu işlem yap - Oturum ID'si bulma işini storage kısmına taşıdık
       const result = await storage.batchCreateOrUpdateHomeworkAttendance(records);
       
       // Sonucu döndür
